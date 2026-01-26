@@ -2,6 +2,9 @@ import os
 import requests
 import json
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_KEY = os.getenv('OUTSCRAPER_API_KEY')
 CACHE_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'restaurants_cache.json')
@@ -29,6 +32,29 @@ RESTAURANTS = {
         "As de Copas, Reus",
     ]
 }
+
+TOP_RESTAURANTS = [
+    "Restaurant del Museu del Vermut, Reus",
+    "La Presó, Reus",
+    "Tacos La Mexicanita, Reus",
+    "Vermuts Rofes, Reus",
+    "Khirganga Restaurant, Reus",
+    "Xivarri Gastronomía, Reus",
+    "Ciutat Gaudí, Reus",
+    "Saona Reus",
+    "Cerveseria Tower, Reus",
+    "Bar Bon-Mar, Reus",
+    "Il Cuore, Reus",
+    "Casa Coder, Reus",
+    "Little Bangkok, Reus",
+    "Brasería Costillar de Reus",
+    "Mirall de Tres, Reus",
+    "Xapatti, Reus",
+    "Ferran Cerro Restaurant, Reus",
+    "Vill Rus Restaurant, Reus",
+    "Restaurant Cal Marc, Reus",
+    "Acarigua Arepera, Reus",
+]
 
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
@@ -96,6 +122,7 @@ def fetch_restaurant_data(query):
                 "name": place.get("name"),
                 "busyness": get_current_busyness(place.get("popular_times")) if is_open else None,
                 "rating": place.get("rating"),
+                "reviews": place.get("reviews"),
                 "is_open": is_open,
             }
     except Exception as e:
@@ -121,11 +148,32 @@ def fetch_all_restaurants():
                 result[plaza].append(data)
             else:
                 name = query.split(',')[0]
-                result[plaza].append({"name": name, "busyness": None, "rating": None, "is_open": True})
+                result[plaza].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True})
     
     # Save cache
     os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
     with open(CACHE_FILE, 'w') as f:
+        json.dump({"timestamp": datetime.now().timestamp(), "data": result}, f)
+    
+    return result
+
+def fetch_top_restaurants():
+    """Fetch data for top 20 restaurants with caching."""
+    cache_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'top_restaurants_cache.json')
+    if os.path.exists(cache_file):
+        with open(cache_file) as f:
+            cache = json.load(f)
+        if datetime.now().timestamp() - cache.get('timestamp', 0) < CACHE_TTL:
+            return cache.get('data', [])
+    
+    result = []
+    for query in TOP_RESTAURANTS:
+        data = fetch_restaurant_data(query)
+        if data:
+            result.append(data)
+    
+    os.makedirs(os.path.dirname(cache_file), exist_ok=True)
+    with open(cache_file, 'w') as f:
         json.dump({"timestamp": datetime.now().timestamp(), "data": result}, f)
     
     return result
