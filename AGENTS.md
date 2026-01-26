@@ -10,7 +10,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 
 ## 📋 PROJECT STATUS
 
-**Phase**: Phase 5 - Polish (in progress)
+**Phase**: Phase 6 - Polish (in progress)
 **Started**: January 26, 2026
 **GitHub**: apmlabs/reuspartytracker
 
@@ -172,13 +172,20 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 - **Backup**: https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona/reus.html
 
 ### Restaurants - Plaça Mercadal
-(To be populated from Google Maps search)
-- Restaurant Museu del Vermut
 - Casa Coder
+- Roslena Mercadal
+- Goofretti
+- El Mestral
+- Vivari
+- Maiki Poké
+- DITALY
+- Déu n'hi Do
+
+### Restaurants - Plaça Evarist Fàbregas
 - La Presó
-- Vermuts Rofes
-- Bar L'Àmfora
-- (more to discover)
+- Sibuya Urban Sushi Bar
+- Yokoso
+- Saona Reus
 
 ### Restaurants - Plaça del Teatre
 - Oplontina
@@ -223,16 +230,24 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 
 ### Phase 4: Restaurant Data ✅
 - [x] Outscraper API integration (Popular Times)
-- [x] Restaurant list for both plazas
-- [x] Busyness data display with "Closed" status
+- [x] Restaurant list for all 3 plazas (14 restaurants)
+- [x] Busyness data display with "Closed"/"Open" status
 - [x] 15-minute caching
 - [x] Combined party level (people + restaurant avg)
 
-### Phase 5: Polish (in progress)
-- [ ] Error handling
+### Phase 5: Historical Data & Charts ✅
+- [x] InfluxDB time-series database (infinite retention)
+- [x] Party history API endpoint
+- [x] Restaurant history API endpoint
+- [x] Daily (24h) and Weekly (7d) charts for people count
+- [x] Daily and Weekly charts for each plaza's avg busyness
+- [x] Chart.js visualization
+
+### Phase 6: Polish (in progress)
+- [ ] Error handling improvements
 - [ ] Fallback to backup webcam
 - [ ] Mobile responsive
-- [ ] Historical data (optional)
+- [ ] Admin interface for historical data
 
 ---
 

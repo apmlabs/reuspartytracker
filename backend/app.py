@@ -9,6 +9,7 @@ from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
 from analyzer import get_party_level, analyze_image
 from restaurants import fetch_all_restaurants
+from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history
 
 app = Flask(__name__, static_folder='../frontend')
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'party_data.json')
@@ -57,6 +58,7 @@ def update_party_data():
         data["party_level"] = get_combined_party_level(people_count)
         data["last_updated"] = datetime.now().isoformat()
         data["error"] = None
+        save_party_data(people_count, data["party_level"])
         print(f"Screenshot: {image_path}, People: {people_count}, Level: {data['party_level']}")
     except Exception as e:
         data["error"] = str(e)
@@ -71,7 +73,21 @@ def get_party():
 @app.route('/api/restaurants')
 def get_restaurants():
     """Return restaurant list with busyness from Outscraper."""
-    return jsonify(fetch_all_restaurants())
+    data = fetch_all_restaurants()
+    save_restaurant_data(data)
+    return jsonify(data)
+
+@app.route('/api/history')
+def get_history():
+    """Return party history for charts."""
+    hours = request.args.get('hours', 24, type=int)
+    return jsonify(get_party_history(hours))
+
+@app.route('/api/history/restaurants')
+def get_rest_history():
+    """Return restaurant history for charts."""
+    hours = request.args.get('hours', 24, type=int)
+    return jsonify(get_restaurant_history(hours))
 
 @app.route('/api/screenshot')
 def get_screenshot():

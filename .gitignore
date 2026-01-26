@@ -10,6 +10,11 @@ screenshots/
 
 # Data files (generated)
 data/party_data.json
+data/*.db
+data/restaurants_cache.json
+
+# InfluxDB data
+.influxdbv2/
 
 # IDE
 .vscode/
@@ -17,3 +22,4 @@ data/party_data.json
 
 # OS
 .DS_Store
+youtube_cookies.json
