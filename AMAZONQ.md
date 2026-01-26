@@ -66,19 +66,38 @@
 - Scheduler configured (default 5min, testing 1hr)
 - API endpoints: /api/party, /api/update, /api/refresh
 
+**21:44** - Cookie expiration issue
+- Screenshots started showing "Sign in to confirm you're not a bot"
+- YouTube cookies had expired/rotated
+- User exported fresh cookies, screenshot capture working again
+
+**21:58** - Systemd service created
+- `reusparty.service` installed and enabled
+- Auto-restarts on failure
+
+**22:01** - Frontend updated
+- Added restaurant section with two plazas
+- Added light/dark theme toggle (persists to localStorage)
+
+**22:12** - Outscraper integration
+- Integrated Outscraper API for restaurant Popular Times data
+- Added 15-minute caching to reduce API calls
+- API key stored in `.env` file (gitignored)
+
 ### Current Status
 - ✅ Screenshot capture: WORKING (Playwright + cookies)
-- ✅ YouTube auth via cookies: WORKING
+- ✅ YouTube auth via cookies: WORKING (fresh cookies needed periodically)
 - ✅ Flask API: WORKING on port 5050
-- ✅ Frontend: WORKING (basic dark theme)
+- ✅ Systemd service: RUNNING (auto-restart enabled)
+- ✅ Frontend: WORKING (dark/light themes, restaurant section)
+- ✅ Restaurant data: WORKING (Outscraper API with caching)
 - 🔄 AI analysis: Manual via Kiro CLI for now
-- ⏳ Restaurant data: Not started
-- ⏳ Light theme: Not started
+- ⏳ OpenAI integration for auto crowd counting
 
 ### Next Steps
-1. Set up systemd service for persistence
-2. Add restaurant data from Google Maps
-3. Improve frontend (light theme toggle, restaurant section)
+1. Integrate OpenAI GPT-4 Vision for automatic crowd counting
+2. Mobile responsive improvements
+3. Historical data tracking (optional)
 
 ---
 

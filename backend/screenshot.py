@@ -7,7 +7,7 @@ SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'screenshots')
 COOKIES_FILE = os.path.join(os.path.dirname(__file__), 'youtube_cookies.json')
 
 def capture_youtube_frame(url):
-    """Capture screenshot from YouTube using Playwright with cookies."""
+    """Capture screenshot from YouTube live stream - fullscreen, playing."""
     os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     output_path = os.path.join(SCREENSHOTS_DIR, f'frame_{timestamp}.png')
@@ -39,8 +39,30 @@ def capture_youtube_frame(url):
             context.add_cookies(cookies)
         
         page = context.new_page()
+        # Visit youtube.com first to establish cookies
+        page.goto('https://www.youtube.com', timeout=30000)
+        page.wait_for_timeout(2000)
         page.goto(url, timeout=30000)
-        page.wait_for_timeout(5000)
+        page.wait_for_timeout(3000)
+        
+        # Click play button if visible
+        try:
+            page.click('button.ytp-large-play-button', timeout=3000)
+            page.wait_for_timeout(2000)
+        except:
+            pass
+        
+        # Click fullscreen
+        try:
+            page.click('button.ytp-fullscreen-button', timeout=2000)
+            page.wait_for_timeout(1000)
+        except:
+            pass
+        
+        # Move mouse away to hide controls
+        page.mouse.move(0, 0)
+        page.wait_for_timeout(2000)
+        
         page.screenshot(path=output_path)
         browser.close()
     
