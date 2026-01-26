@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reus Party Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: system-ui, sans-serif; background: #0f0f0f; color: #fff; min-height: 100vh; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; margin-bottom: 20px; }
+        .video-container { position: relative; padding-bottom: 56.25%; height: 0; margin-bottom: 20px; }
+        .video-container iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius: 8px; }
+        .stats { display: flex; gap: 20px; justify-content: center; margin-bottom: 30px; flex-wrap: wrap; }
+        .stat-box { background: #1a1a1a; padding: 20px 30px; border-radius: 8px; text-align: center; min-width: 150px; }
+        .stat-box .value { font-size: 3em; font-weight: bold; }
+        .stat-box .label { color: #888; margin-top: 5px; }
+        .party-level .value { color: #ff6b6b; }
+        .people-count .value { color: #4ecdc4; }
+        .last-updated { color: #666; text-align: center; font-size: 0.9em; }
+        .error { color: #ff6b6b; text-align: center; padding: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Reus Party Tracker</h1>
+        
+        <div class="video-container">
+            <iframe src="https://www.youtube.com/embed/L9HyLjRVN8E?autoplay=1&mute=1" allowfullscreen></iframe>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-box party-level">
+                <div class="value" id="party-level">-</div>
+                <div class="label">Party Level</div>
+            </div>
+            <div class="stat-box people-count">
+                <div class="value" id="people-count">-</div>
+                <div class="label">People</div>
+            </div>
+        </div>
+        
+        <div class="last-updated" id="last-updated">Loading...</div>
+        <div class="error" id="error"></div>
+    </div>
+    
+    <script>
+        async function fetchData() {
+            try {
+                const res = await fetch('/api/party');
+                const data = await res.json();
+                document.getElementById('party-level').textContent = data.party_level + '/10';
+                document.getElementById('people-count').textContent = '~' + data.people_count;
+                document.getElementById('error').textContent = data.error || '';
+                if (data.last_updated) {
+                    const ago = Math.round((Date.now() - new Date(data.last_updated)) / 60000);
+                    document.getElementById('last-updated').textContent = `Updated ${ago} min ago`;
+                }
+            } catch (e) {
+                document.getElementById('error').textContent = 'Failed to load data';
+            }
+        }
+        fetchData();
+        setInterval(fetchData, 60000);
+    </script>
+</body>
+</html>
