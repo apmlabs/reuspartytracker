@@ -4,8 +4,9 @@
 
 ### Goals
 - [x] Create project documentation (AGENTS.md, AMAZONQ.md, README.md)
-- [ ] Create GitHub repository
-- [ ] Set up basic project structure
+- [x] Create GitHub repository
+- [x] Set up basic project structure
+- [x] Screenshot capture working
 
 ### Progress
 
@@ -37,11 +38,47 @@
 3. GitHub repo: apmlabs/reuspartytracker
 4. Screenshot interval: 5 min default, easily configurable
 
+**20:42** - GitHub repo created, docs pushed
+
+**20:45** - Tried yt-dlp but YouTube requires auth/cookies now
+
+**20:47** - Switched to headless Chromium approach
+
+**20:52** - Screenshot capture working!
+- Using `chromium-browser --headless --screenshot` directly
+- Selenium was hanging, direct CLI works
+- Captured 180KB PNG from YouTube stream
+- BUT: YouTube showed "sign in to confirm not a bot"
+
+**21:02** - Cookies approach
+- User exported cookies from Chrome using EditThisCookie extension
+- Uploaded youtube_cookies.json
+
+**21:07** - Playwright working!
+- Switched from Selenium to Playwright (better headless support)
+- Cookies loaded successfully
+- **Screenshot captured showing actual Plaça Mercadal!**
+- Night view, plaza nearly empty (~0 people)
+
+**21:08** - Flask app + Frontend working!
+- Flask API on port 5050
+- Basic dark-themed frontend with YouTube embed
+- Scheduler configured (default 5min, testing 1hr)
+- API endpoints: /api/party, /api/update, /api/refresh
+
+### Current Status
+- ✅ Screenshot capture: WORKING (Playwright + cookies)
+- ✅ YouTube auth via cookies: WORKING
+- ✅ Flask API: WORKING on port 5050
+- ✅ Frontend: WORKING (basic dark theme)
+- 🔄 AI analysis: Manual via Kiro CLI for now
+- ⏳ Restaurant data: Not started
+- ⏳ Light theme: Not started
+
 ### Next Steps
-1. Create GitHub repo
-2. Set up basic Flask skeleton
-3. Implement YouTube screenshot capture
-4. Test AI vision analysis
+1. Set up systemd service for persistence
+2. Add restaurant data from Google Maps
+3. Improve frontend (light theme toggle, restaurant section)
 
 ---
 

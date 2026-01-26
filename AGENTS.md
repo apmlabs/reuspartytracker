@@ -181,13 +181,14 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 ## 🚀 DEPLOYMENT
 
 ### Current Server
-- Host: This EC2 instance
-- Port: TBD (avoid conflict with existing services)
-- Process: systemd service or screen session
+- **Host**: 54.80.204.92 (AWS EC2)
+- **Port**: 5050
+- **URL**: http://54.80.204.92:5050
+- Process: Flask dev server (needs systemd for production)
 
 ### Existing Services (DO NOT TOUCH)
-- Check what's running on ports before deploying
-- Use unique port (e.g., 5050)
+- Port 5001: OnyxPoker server
+- Port 5050: Reus Party Tracker ✅
 
 ---
 
@@ -196,20 +197,20 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 ### Phase 1: Basic Setup ✅ Planning
 - [x] Create project structure
 - [x] Create documentation (AGENTS.md, AMAZONQ.md, README.md)
-- [ ] Create GitHub repo (apmlabs/reuspartytracker)
-- [ ] Basic Flask app skeleton
+- [x] Create GitHub repo (apmlabs/reuspartytracker)
+- [x] Basic Flask app skeleton
 
-### Phase 2: YouTube Integration
-- [ ] yt-dlp screenshot capture
-- [ ] AI vision analysis (people counting)
-- [ ] Party level calculation
-- [ ] Scheduled capture task
+### Phase 2: YouTube Integration ✅ DONE
+- [x] Playwright screenshot capture
+- [x] YouTube cookies authentication
+- [x] Party level calculation
+- [x] Scheduled capture task
 
-### Phase 3: Frontend
-- [ ] YouTube embed
-- [ ] Party level display
-- [ ] People count display
-- [ ] Dark theme (pizzint.watch style)
+### Phase 3: Frontend ✅ BASIC
+- [x] YouTube embed
+- [x] Party level display
+- [x] People count display
+- [x] Dark theme
 - [ ] Light theme toggle
 
 ### Phase 4: Restaurant Data
