@@ -25,6 +25,27 @@ def save_data(data):
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
 
+def get_restaurant_busyness_avg():
+    """Get average busyness of open Plaça Mercadal restaurants."""
+    try:
+        data = fetch_all_restaurants()
+        mercadal = data.get('placa_mercadal', [])
+        values = [r['busyness'] for r in mercadal if r.get('is_open') and r.get('busyness') is not None]
+        return sum(values) / len(values) if values else None
+    except:
+        return None
+
+def get_combined_party_level(people_count):
+    """Combine people count with restaurant busyness for final party level."""
+    people_level = get_party_level(people_count)
+    rest_avg = get_restaurant_busyness_avg()
+    if rest_avg is None:
+        return people_level
+    # Restaurant contribution: 100% busyness = level 5, scale linearly
+    rest_level = min(10, rest_avg / 20)  # 100% -> 5, 200% -> 10
+    # Average both signals
+    return round((people_level + rest_level) / 2)
+
 def update_party_data():
     """Capture screenshot and analyze with AI."""
     data = load_data()
@@ -33,7 +54,7 @@ def update_party_data():
         people_count = analyze_image(image_path)
         data["last_screenshot"] = image_path
         data["people_count"] = people_count
-        data["party_level"] = get_party_level(people_count)
+        data["party_level"] = get_combined_party_level(people_count)
         data["last_updated"] = datetime.now().isoformat()
         data["error"] = None
         print(f"Screenshot: {image_path}, People: {people_count}, Level: {data['party_level']}")
@@ -66,7 +87,7 @@ def update_count():
     data = load_data()
     count = request.json.get('people_count', 0)
     data['people_count'] = count
-    data['party_level'] = get_party_level(count)
+    data['party_level'] = get_combined_party_level(count)
     data['last_updated'] = datetime.now().isoformat()
     save_data(data)
     return jsonify(data)
