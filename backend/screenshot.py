@@ -4,7 +4,7 @@ from datetime import datetime
 from playwright.sync_api import sync_playwright
 
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'screenshots')
-COOKIES_FILE = os.path.join(os.path.dirname(__file__), 'youtube_cookies.json')
+COOKIES_FILE = os.path.join(os.path.dirname(__file__), '..', 'youtube_cookies.json')
 
 def capture_youtube_frame(url):
     """Capture screenshot from YouTube live stream - fullscreen, playing."""
@@ -40,9 +40,9 @@ def capture_youtube_frame(url):
         
         page = context.new_page()
         # Visit youtube.com first to establish cookies
-        page.goto('https://www.youtube.com', timeout=30000)
+        page.goto('https://www.youtube.com', timeout=60000)
         page.wait_for_timeout(2000)
-        page.goto(url, timeout=30000)
+        page.goto(url, timeout=60000)
         page.wait_for_timeout(3000)
         
         # Click play button if visible

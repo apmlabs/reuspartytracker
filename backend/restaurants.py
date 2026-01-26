@@ -9,11 +9,20 @@ CACHE_TTL = 900  # 15 minutes
 
 RESTAURANTS = {
     "placa_mercadal": [
-        "Restaurant Museu del Vermut, Reus",
         "Casa Coder, Reus",
+        "Roslena Mercadal, Reus",
+        "Goofretti, Reus",
+        "El Mestral, Reus",
+        "Vivari, Reus",
+        "Maiki Poké, Reus",
+        "DITALY, Reus",
+        "Déu n'hi Do, Reus",
+    ],
+    "placa_evarist_fabregas": [
         "La Presó, Reus",
-        "Vermuts Rofes, Reus",
-        "Bar L'Àmfora, Reus",
+        "Sibuya Urban Sushi Bar, Reus",
+        "Yokoso, Reus",
+        "Saona Reus",
     ],
     "placa_del_teatre": [
         "Oplontina, Reus",
