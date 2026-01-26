@@ -1,0 +1,14 @@
+[Unit]
+Description=Reus Party Tracker
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/mcpprojects/reuspartytracker/backend
+EnvironmentFile=/home/ubuntu/mcpprojects/reuspartytracker/backend/.env
+ExecStart=/home/ubuntu/mcpprojects/reuspartytracker/backend/venv/bin/python app.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

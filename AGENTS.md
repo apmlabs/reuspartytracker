@@ -206,18 +206,18 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 - [x] Party level calculation
 - [x] Scheduled capture task
 
-### Phase 3: Frontend ✅ BASIC
+### Phase 3: Frontend ✅ DONE
 - [x] YouTube embed
 - [x] Party level display
 - [x] People count display
 - [x] Dark theme
-- [ ] Light theme toggle
+- [x] Light theme toggle
 
-### Phase 4: Restaurant Data
-- [ ] Google Maps Places API integration
-- [ ] Restaurant list for both plazas
-- [ ] Busyness data display
-- [ ] Scheduled refresh
+### Phase 4: Restaurant Data ✅ DONE
+- [x] Outscraper API integration (Popular Times)
+- [x] Restaurant list for both plazas
+- [x] Busyness data display
+- [x] 15-minute caching
 
 ### Phase 5: Polish
 - [ ] Error handling
@@ -229,6 +229,11 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 
 ## 🔑 CRITICAL LESSONS
 
+### From This Project
+1. **YouTube cookies expire** - They rotate for security. When screenshots show "Sign in to confirm you're not a bot", export fresh cookies from browser
+2. **Use Netscape format for yt-dlp** - JSON cookies work for Playwright, but yt-dlp needs Netscape .txt format
+3. **yt-dlp validates cookies** - It tells you if cookies are expired, useful for debugging
+
 ### From Other Projects
 1. **Don't mess with existing services** - Check ports before deploying
 2. **Configuration over hardcoding** - Make intervals easily changeable
@@ -239,10 +244,11 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 
 ## 🐛 KNOWN ISSUES / RISKS
 
-1. **YouTube stream availability** - May go offline, need fallback
-2. **AI accuracy** - Crowd counting in low light may be inaccurate
-3. **Google Maps rate limits** - May need caching strategy
-4. **Cost** - AI API calls cost money, optimize frequency
+1. **YouTube cookies expire** - Cookies rotate periodically, need fresh export when bot prompt appears
+2. **YouTube stream availability** - May go offline, need fallback
+3. **AI accuracy** - Crowd counting in low light may be inaccurate
+4. **Google Maps rate limits** - May need caching strategy
+5. **Cost** - AI API calls cost money, optimize frequency
 
 ---
 

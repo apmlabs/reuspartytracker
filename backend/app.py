@@ -1,15 +1,18 @@
 import json
 import os
+import glob
 from datetime import datetime
-from flask import Flask, jsonify, send_from_directory, request
+from flask import Flask, jsonify, send_from_directory, send_file, request
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
-from analyzer import get_party_level
+from analyzer import get_party_level, analyze_image
+from restaurants import fetch_all_restaurants
 
 app = Flask(__name__, static_folder='../frontend')
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'party_data.json')
+SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'screenshots')
 
 def load_data():
     if os.path.exists(DATA_FILE):
@@ -23,14 +26,17 @@ def save_data(data):
         json.dump(data, f)
 
 def update_party_data():
-    """Capture screenshot. Analysis done separately via Kiro."""
+    """Capture screenshot and analyze with AI."""
     data = load_data()
     try:
         image_path = capture_youtube_frame(YOUTUBE_URL)
+        people_count = analyze_image(image_path)
         data["last_screenshot"] = image_path
+        data["people_count"] = people_count
+        data["party_level"] = get_party_level(people_count)
         data["last_updated"] = datetime.now().isoformat()
         data["error"] = None
-        print(f"Screenshot saved: {image_path}")
+        print(f"Screenshot: {image_path}, People: {people_count}, Level: {data['party_level']}")
     except Exception as e:
         data["error"] = str(e)
         data["last_updated"] = datetime.now().isoformat()
@@ -40,6 +46,19 @@ def update_party_data():
 @app.route('/api/party')
 def get_party():
     return jsonify(load_data())
+
+@app.route('/api/restaurants')
+def get_restaurants():
+    """Return restaurant list with busyness from Outscraper."""
+    return jsonify(fetch_all_restaurants())
+
+@app.route('/api/screenshot')
+def get_screenshot():
+    """Serve the latest screenshot."""
+    files = sorted(glob.glob(os.path.join(SCREENSHOTS_DIR, 'frame_*.png')))
+    if files:
+        return send_file(files[-1], mimetype='image/png')
+    return '', 404
 
 @app.route('/api/update', methods=['POST'])
 def update_count():
@@ -65,5 +84,7 @@ if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_party_data, 'interval', seconds=SCREENSHOT_INTERVAL)
     scheduler.start()
+    # Schedule first update in 5 seconds (don't block startup)
+    scheduler.add_job(update_party_data, 'date', run_date=datetime.now().replace(microsecond=0).isoformat())
     print(f"Starting server on port {PORT}, screenshot interval: {SCREENSHOT_INTERVAL}s")
     app.run(host='0.0.0.0', port=PORT, debug=False)
