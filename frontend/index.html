@@ -93,7 +93,7 @@
                     const name = plaza.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     html += `<div class="plaza"><h3>📍 ${name}</h3>`;
                     for (const r of restaurants) {
-                        const busy = r.busyness !== null ? r.busyness + '%' : '—';
+                        const busy = !r.is_open ? 'Closed' : (r.busyness !== null ? r.busyness + '%' : '—');
                         html += `<div class="restaurant"><span>${r.name}</span><span class="busyness">${busy}</span></div>`;
                     }
                     html += '</div>';
@@ -105,9 +105,10 @@
         fetchData();
         fetchRestaurants();
         setInterval(fetchData, 60000);
+        setInterval(fetchRestaurants, 900000); // 15 minutes
         setInterval(() => {
             document.getElementById('screenshot').src = '/api/screenshot?' + Date.now();
-        }, 60000);
+        }, 30000); // 30 seconds
     </script>
 </body>
 </html>

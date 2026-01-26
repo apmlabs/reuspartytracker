@@ -10,9 +10,9 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 
 ## 📋 PROJECT STATUS
 
-**Phase**: Planning
+**Phase**: Phase 5 - Polish (in progress)
 **Started**: January 26, 2026
-**GitHub**: apmlabs/reuspartytracker (to be created)
+**GitHub**: apmlabs/reuspartytracker
 
 ---
 
@@ -81,14 +81,22 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 
 ### Party Level Formula
 ```
-People Count → Party Level (0-10)
+People Count → Base Level (0-10)
 ─────────────────────────────────
-0-1 people   → Level 0 (Dead)
-2-10 people  → Level 2 (Quiet)
-11-50 people → Level 7 (Getting busy)
-51-100 people → Level 8 (Party mode)
-101-200 people → Level 10 (Peak party)
-200+ people  → Level 10 (Maximum)
+0 people     → Level 0
+1-2 people   → Level 1
+3-5 people   → Level 2
+6-10 people  → Level 3
+11-20 people → Level 4
+21-50 people → Level 5
+51-70 people → Level 7
+71-100 people → Level 9
+100+ people  → Level 10
+
+Combined Formula:
+─────────────────
+Restaurant Avg Busyness: 100% = Level 5 (scales linearly)
+Final Party Level = (People Level + Restaurant Level) / 2
 ```
 
 ### Tech Stack
@@ -194,32 +202,33 @@ BACKUP_WEBCAM = "https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona
 
 ## 📋 IMPLEMENTATION PHASES
 
-### Phase 1: Basic Setup ✅ Planning
+### Phase 1: Basic Setup ✅
 - [x] Create project structure
 - [x] Create documentation (AGENTS.md, AMAZONQ.md, README.md)
 - [x] Create GitHub repo (apmlabs/reuspartytracker)
 - [x] Basic Flask app skeleton
 
-### Phase 2: YouTube Integration ✅ DONE
+### Phase 2: YouTube Integration ✅
 - [x] Playwright screenshot capture
 - [x] YouTube cookies authentication
 - [x] Party level calculation
-- [x] Scheduled capture task
+- [x] Scheduled capture task (30 sec interval)
 
-### Phase 3: Frontend ✅ DONE
+### Phase 3: Frontend ✅
 - [x] YouTube embed
 - [x] Party level display
 - [x] People count display
-- [x] Dark theme
-- [x] Light theme toggle
+- [x] Dark/light theme toggle
+- [x] Auto-refresh (30s screenshots, 15min restaurants)
 
-### Phase 4: Restaurant Data ✅ DONE
+### Phase 4: Restaurant Data ✅
 - [x] Outscraper API integration (Popular Times)
 - [x] Restaurant list for both plazas
-- [x] Busyness data display
+- [x] Busyness data display with "Closed" status
 - [x] 15-minute caching
+- [x] Combined party level (people + restaurant avg)
 
-### Phase 5: Polish
+### Phase 5: Polish (in progress)
 - [ ] Error handling
 - [ ] Fallback to backup webcam
 - [ ] Mobile responsive

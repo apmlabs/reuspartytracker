@@ -6,18 +6,14 @@ import sys
 import re
 import os
 
+from config import PARTY_THRESHOLDS
+
 def get_party_level(people_count):
     """Convert people count to party level 0-10"""
-    if people_count <= 1:
-        return 0
-    elif people_count <= 10:
-        return 2
-    elif people_count <= 50:
-        return 7
-    elif people_count <= 100:
-        return 8
-    else:
-        return 10
+    for max_ppl, level in PARTY_THRESHOLDS:
+        if people_count <= max_ppl:
+            return level
+    return 10
 
 def analyze_image(image_path):
     """Use kiro-cli to count people in screenshot"""

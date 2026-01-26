@@ -21,6 +21,42 @@ RESTAURANTS = {
     ]
 }
 
+DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+def is_open_now(working_hours):
+    """Check if restaurant is currently open based on working_hours."""
+    if not working_hours:
+        return True  # Assume open if no data
+    now = datetime.now()
+    day_name = DAYS[now.weekday()]
+    hours = working_hours.get(day_name, [])
+    if not hours or hours == ['Closed']:
+        return False
+    # Parse hours like "12PM-12AM" or "12-7PM"
+    for slot in hours:
+        try:
+            parts = slot.replace(' ', '').split('-')
+            if len(parts) != 2:
+                continue
+            def parse_time(t):
+                t = t.upper()
+                pm = 'PM' in t
+                t = t.replace('AM', '').replace('PM', '')
+                h = int(t)
+                if pm and h != 12:
+                    h += 12
+                if not pm and h == 12:
+                    h = 0
+                return h
+            open_h, close_h = parse_time(parts[0]), parse_time(parts[1])
+            if close_h == 0:
+                close_h = 24
+            if open_h <= now.hour < close_h:
+                return True
+        except:
+            return True  # Assume open on parse error
+    return False
+
 def get_current_busyness(popular_times):
     """Extract current hour's busyness from popular_times data."""
     if not popular_times:
@@ -43,13 +79,15 @@ def fetch_restaurant_data(query):
     try:
         r = requests.get(url, params=params, headers=headers, timeout=60)
         resp = r.json()
-        data = resp.get("data", resp)  # Handle both formats
+        data = resp.get("data", resp)
         if data and len(data) > 0 and len(data[0]) > 0:
             place = data[0][0]
+            is_open = is_open_now(place.get("working_hours"))
             return {
                 "name": place.get("name"),
-                "busyness": get_current_busyness(place.get("popular_times")),
+                "busyness": get_current_busyness(place.get("popular_times")) if is_open else None,
                 "rating": place.get("rating"),
+                "is_open": is_open,
             }
     except Exception as e:
         print(f"Error fetching {query}: {e}")
@@ -74,7 +112,7 @@ def fetch_all_restaurants():
                 result[plaza].append(data)
             else:
                 name = query.split(',')[0]
-                result[plaza].append({"name": name, "busyness": None, "rating": None})
+                result[plaza].append({"name": name, "busyness": None, "rating": None, "is_open": True})
     
     # Save cache
     os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
