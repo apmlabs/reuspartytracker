@@ -8,8 +8,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
 from analyzer import get_party_level, analyze_image
-from restaurants import fetch_all_restaurants
-from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history
+from restaurants import fetch_all_restaurants, fetch_top_restaurants
+from database import save_party_data, save_restaurant_data, save_top_restaurant_data, get_party_history, get_restaurant_history, get_top_restaurant_history
 
 app = Flask(__name__, static_folder='../frontend')
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'party_data.json')
@@ -77,6 +77,13 @@ def get_restaurants():
     save_restaurant_data(data)
     return jsonify(data)
 
+@app.route('/api/top-restaurants')
+def get_top_restaurants():
+    """Return top 20 restaurants with busyness."""
+    data = fetch_top_restaurants()
+    save_top_restaurant_data(data)
+    return jsonify(data)
+
 @app.route('/api/history')
 def get_history():
     """Return party history for charts."""
@@ -88,6 +95,12 @@ def get_rest_history():
     """Return restaurant history for charts."""
     hours = request.args.get('hours', 24, type=int)
     return jsonify(get_restaurant_history(hours))
+
+@app.route('/api/history/top-restaurants')
+def get_top_rest_history():
+    """Return top restaurant history for charts."""
+    hours = request.args.get('hours', 24, type=int)
+    return jsonify(get_top_restaurant_history(hours))
 
 @app.route('/api/screenshot')
 def get_screenshot():
