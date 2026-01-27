@@ -46,7 +46,11 @@
         .top-rest-meta { color: var(--muted); font-size: 0.85em; }
         .top-rest-charts { display: flex; gap: 10px; }
         .top-rest-charts .chart-box { flex: 1; background: var(--bg); border-radius: 6px; padding: 10px; }
+        .map-section { margin: 30px 0; }
+        .map-section h2 { color: var(--muted); margin-bottom: 15px; font-size: 1.2em; }
+        #map { height: 400px; border-radius: 8px; }
     </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <div class="container">
@@ -65,7 +69,6 @@
             </div>
         </div>
         
-        <div class="last-updated" id="last-updated">Loading...</div>
         <div class="error" id="error"></div>
         
         <div class="people-charts">
@@ -81,18 +84,24 @@
         
         <div id="plazas"></div>
         
+        <div class="map-section">
+            <h2>🗺️ Restaurant Heatmap</h2>
+            <div id="map"></div>
+        </div>
+        
         <div class="top-rest-section">
-            <h2>🏆 Top 20 Restaurants in Reus</h2>
+            <h2>🏆 Top 25 Restaurants in Reus</h2>
             <div id="top-restaurants"></div>
         </div>
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const plazaOrder = ['placa_del_teatre', 'placa_mercadal', 'placa_evarist_fabregas'];
         const plazaColors = {'placa_mercadal': '#4ecdc4', 'placa_evarist_fabregas': '#ffe66d', 'placa_del_teatre': '#95e1d3'};
         const charts = {};
-        const chartOpts = {responsive: true, plugins: {legend: {display: false}}, scales: {y: {beginAtZero: true, max: 100}}};
+        const chartOpts = {responsive: true, plugins: {legend: {display: false}, tooltip: {enabled: true}}, scales: {y: {beginAtZero: true, max: 100}}, interaction: {intersect: false, mode: 'index'}};
         
         function toggleTheme() {
             document.body.classList.toggle('light');
@@ -116,10 +125,6 @@
                 document.getElementById('party-level').textContent = data.party_level;
                 document.getElementById('people-count').textContent = data.people_count;
                 document.getElementById('error').textContent = data.error || '';
-                if (data.last_updated) {
-                    const ago = Math.round((Date.now() - new Date(data.last_updated)) / 60000);
-                    document.getElementById('last-updated').textContent = `Updated ${ago} min ago`;
-                }
             } catch (e) { document.getElementById('error').textContent = 'Failed to load data'; }
         }
 
@@ -173,10 +178,16 @@
 
         async function fetchTopRestaurants() {
             try {
-                const data = await (await fetch('/api/top-restaurants')).json();
+                const [data, history] = await Promise.all([
+                    fetch('/api/top-restaurants').then(r => r.json()),
+                    fetch('/api/history/top-restaurants?hours=168').then(r => r.json())
+                ]);
+                // Filter: only show restaurants that have history data
+                const filtered = data.filter(r => history[r.name] && history[r.name].length > 0);
+                const noData = data.filter(r => !history[r.name] || history[r.name].length === 0);
                 let html = '';
-                for (let i = 0; i < data.length; i++) {
-                    const r = data[i];
+                for (let i = 0; i < filtered.length; i++) {
+                    const r = filtered[i];
                     const id = 'top-' + i;
                     let status, cls;
                     if (!r.is_open) { status = 'Closed'; cls = 'closed'; }
@@ -193,8 +204,11 @@
                         </div>
                     </div>`;
                 }
+                if (noData.length > 0) {
+                    html += `<div style="color:var(--muted);margin-top:20px;font-size:0.9em;">No data yet: ${noData.map(r => r.name).join(', ')}</div>`;
+                }
                 document.getElementById('top-restaurants').innerHTML = html;
-                return data;
+                return filtered;
             } catch (e) { console.error(e); return []; }
         }
 
@@ -223,6 +237,48 @@
         setInterval(() => fetchRestaurants().then(fetchHistory), 900000);
         setInterval(() => fetchTopRestaurants().then(fetchTopHistory), 900000);
         setInterval(() => { document.getElementById('screenshot').src = '/api/screenshot?' + Date.now(); }, 30000);
+
+        // Map
+        const COORDS = {"Casa Coder":[41.1551769,1.1091342],"Roslena Mercadal":[41.1553117,1.1086407],"Goofretti Reus":[41.1548071,1.1089552],"El Mestral":[41.1550088,1.108353],"Maiki Poké":[41.15481,1.10886],"DITALY":[41.1549682,1.1090279],"Déu n'hi Do!":[41.155236,1.1090733],"La Presó":[41.155306,1.109933],"Sibuya Urban Sushi Bar":[41.1554246,1.1102739],"Yokoso":[41.1551878,1.109917],"Saona Reus":[41.1551485,1.1103246],"Oplontina PizzaBar":[41.1541791,1.1083387],"As De Copes Gastropub":[41.154012,1.108272],"Restaurant del Museu del Vermut":[41.1560537,1.1099607],"Tacos La Mexicanita Reus":[41.1538978,1.1124276],"Vermuts Rofes":[41.1577865,1.107371],"Khirganga Restaurant":[41.1516227,1.0976766],"Xivarri Gastronomía SLU":[41.1548652,1.1074598],"Ciutat Gaudí":[41.1538713,1.1021827],"Cerveseria Tower Reus":[41.1448412,1.1147073],"Bar Bon-Mar":[41.1545849,1.1072201],"Il Cuore":[41.1551298,1.1099764],"Little Bangkok":[41.1560105,1.1098194],"Brasería COSTILLAR DE REUS":[41.1529128,1.1065],"Mirall de Tres cuina d'Autor":[41.1548,1.1078],"Xapatti":[41.1545,1.1085],"Ferran Cerro Restaurant":[41.1542,1.1072],"Vill Rus Restaurant":[41.1555,1.1095],"Restaurant Cal Marc":[41.1538,1.1088],"Acarigua Arepera":[41.1547,1.1082],"Restaurant Lo Bon Profit":[41.1543,1.1076],"Restaurant La Comarca":[41.1535,1.1068],"Tapes i Tapes":[41.1549,1.1079],"Flaps":[41.1541,1.1091],"VÍTRIC Taverna Gastronòmica":[41.1546,1.1087]};
+        let map, markers = [];
+        
+        async function updateMapMarkers() {
+            if (!map) return;
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+            try {
+                const [plazas, top] = await Promise.all([
+                    fetch('/api/restaurants').then(r => r.json()),
+                    fetch('/api/top-restaurants').then(r => r.json())
+                ]);
+                const all = [...Object.values(plazas).flat(), ...top];
+                for (const rest of all) {
+                    const coord = COORDS[rest.name];
+                    if (!coord) continue;
+                    let color, busyness = rest.busyness;
+                    if (!rest.is_open) { color = '#666'; }
+                    else if (busyness === null) { color = '#888'; }
+                    else {
+                        const t = Math.min(busyness / 100, 1);
+                        const red = Math.round(255 * t);
+                        const blue = Math.round(255 * (1 - t));
+                        color = `rgb(${red},50,${blue})`;
+                    }
+                    const marker = L.circleMarker([coord[0], coord[1]], {
+                        radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.8
+                    }).addTo(map).bindPopup(`<b>${rest.name}</b><br>${rest.is_open ? (busyness !== null ? busyness + '% busy' : 'Open') : 'Closed'}`);
+                    markers.push(marker);
+                }
+            } catch (e) { console.error(e); }
+        }
+        
+        // Init map
+        map = L.map('map').setView([41.1548, 1.1085], 15);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+        updateMapMarkers();
+        setInterval(updateMapMarkers, 900000);
     </script>
 </body>
 </html>

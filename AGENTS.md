@@ -89,7 +89,11 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │ Plaza Mercadal:    Restaurants (20%) | Charts 24h/7d (80%)          │   │
 │  │ Plaza Evarist:     Restaurants (20%) | Charts 24h/7d (80%)          │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Top 20 Restaurants: Each with name, reviews, rating, 24h/7d charts  │   │
+│  │ Restaurant Heatmap: Leaflet map with color-coded markers            │   │
+│  │   Blue = low busyness, Red = high busyness, Grey = closed/no data   │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Top 25 Restaurants: Each with name, reviews, rating, 24h/7d charts  │   │
+│  │   (filtered to show only those with historical data)                │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
