@@ -11,8 +11,9 @@ Watch the live stream, see how many people are partying, and check which restaur
 - 📺 Live YouTube stream screenshot of Plaça Mercadal
 - 🎉 AI-powered party level indicator (0-10)
 - 👥 Estimated crowd count via Kiro CLI Vision
-- 🍽️ Restaurant busyness levels from Google Maps (14 plaza restaurants + Top 20 in Reus)
+- 🍽️ Restaurant busyness levels from Google Maps (14 plaza restaurants + Top 25 in Reus)
 - 📊 Historical charts (24h and 7d) for people count and restaurant busyness
+- 🗺️ Interactive heatmap showing restaurant busyness across Reus
 - 🌙 Dark & light themes
 - 💾 InfluxDB time-series storage with infinite retention
 
@@ -38,7 +39,7 @@ Watch the live stream, see how many people are partying, and check which restaur
 - Yokoso
 - Saona Reus
 
-### Top 20 Restaurants in Reus (by reviews)
+### Top 25 Restaurants in Reus (by reviews)
 1. Restaurant del Museu del Vermut (4,300 reviews)
 2. La Presó (2,278 reviews)
 3. Tacos La Mexicanita (2,197 reviews)
@@ -59,6 +60,11 @@ Watch the live stream, see how many people are partying, and check which restaur
 18. Vill Rus Restaurant (1,027 reviews)
 19. Restaurant Cal Marc (1,013 reviews)
 20. Acarigua Arepera (970 reviews)
+21. Restaurant Lo Bon Profit (842 reviews)
+22. Restaurant La Comarca (778 reviews)
+23. Tapes i Tapes (693 reviews)
+24. Flaps (689 reviews)
+25. VÍTRIC Taverna Gastronòmica (677 reviews)
 
 ## Tech Stack
 

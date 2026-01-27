@@ -54,6 +54,11 @@ TOP_RESTAURANTS = [
     "Vill Rus Restaurant, Reus",
     "Restaurant Cal Marc, Reus",
     "Acarigua Arepera, Reus",
+    "Restaurant Lo Bon Profit, Reus",
+    "Restaurant La Comarca, Reus",
+    "Tapes i Tapes, Reus",
+    "Flaps, Reus",
+    "VÍTRIC Taverna Gastronòmica, Reus",
 ]
 
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
