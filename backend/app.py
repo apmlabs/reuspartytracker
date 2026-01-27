@@ -29,7 +29,7 @@ def save_data(data):
 def get_restaurant_busyness_avg():
     """Get average busyness of open Plaça Mercadal restaurants."""
     try:
-        data = fetch_all_restaurants()
+        data, _ = fetch_all_restaurants()
         mercadal = data.get('placa_mercadal', [])
         values = [r['busyness'] for r in mercadal if r.get('is_open') and r.get('busyness') is not None]
         return sum(values) / len(values) if values else None
@@ -72,17 +72,15 @@ def get_party():
 
 @app.route('/api/restaurants')
 def get_restaurants():
-    """Return restaurant list with busyness from Outscraper."""
-    data = fetch_all_restaurants()
-    save_restaurant_data(data)
-    return jsonify(data)
+    """Return restaurant list with busyness from cache."""
+    data, timestamp = fetch_all_restaurants()
+    return jsonify({"data": data, "last_updated": timestamp})
 
 @app.route('/api/top-restaurants')
 def get_top_restaurants():
-    """Return top 20 restaurants with busyness."""
-    data = fetch_top_restaurants()
-    save_top_restaurant_data(data)
-    return jsonify(data)
+    """Return top 25 restaurants with busyness from cache."""
+    data, timestamp = fetch_top_restaurants()
+    return jsonify({"data": data, "last_updated": timestamp})
 
 @app.route('/api/history')
 def get_history():
@@ -126,6 +124,17 @@ def refresh():
     update_party_data()
     return jsonify(load_data())
 
+def refresh_restaurant_data():
+    """Background job to refresh restaurant data from Outscraper."""
+    try:
+        data, _ = fetch_all_restaurants(force_refresh=True)
+        save_restaurant_data(data)
+        top_data, _ = fetch_top_restaurants(force_refresh=True)
+        save_top_restaurant_data(top_data)
+        print(f"[{datetime.now().isoformat()}] Restaurant data refreshed")
+    except Exception as e:
+        print(f"Error refreshing restaurant data: {e}")
+
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
@@ -133,6 +142,7 @@ def index():
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_party_data, 'interval', seconds=SCREENSHOT_INTERVAL)
+    scheduler.add_job(refresh_restaurant_data, 'interval', minutes=15)
     scheduler.start()
     # Schedule first update in 5 seconds (don't block startup)
     scheduler.add_job(update_party_data, 'date', run_date=datetime.now().replace(microsecond=0).isoformat())

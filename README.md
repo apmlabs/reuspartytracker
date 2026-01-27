@@ -11,11 +11,12 @@ Watch the live stream, see how many people are partying, and check which restaur
 - 📺 Live YouTube stream screenshot of Plaça Mercadal
 - 🎉 AI-powered party level indicator (0-10)
 - 👥 Estimated crowd count via Kiro CLI Vision
-- 🍽️ Restaurant busyness levels from Google Maps (14 plaza restaurants + Top 25 in Reus)
+- 🍽️ Restaurant busyness levels from Google Maps (14 plaza + 8 top restaurants)
 - 📊 Historical charts (24h and 7d) for people count and restaurant busyness
 - 🗺️ Interactive heatmap showing restaurant busyness across Reus
 - 🌙 Dark & light themes
 - 💾 InfluxDB time-series storage with infinite retention
+- 💰 Smart API optimization to minimize Outscraper costs
 
 ## Tracked Locations
 
@@ -39,33 +40,18 @@ Watch the live stream, see how many people are partying, and check which restaur
 - Yokoso
 - Saona Reus
 
-### Top 25 Restaurants in Reus (by reviews)
+### Top 8 Restaurants in Reus (by reviews)
 1. Restaurant del Museu del Vermut (4,300 reviews)
-2. La Presó (2,278 reviews)
-3. Tacos La Mexicanita (2,197 reviews)
-4. Vermuts Rofes (2,117 reviews)
-5. Khirganga Restaurant (1,883 reviews)
-6. Xivarri Gastronomía (1,763 reviews)
-7. Ciutat Gaudí (1,622 reviews)
-8. Saona Reus (1,589 reviews)
-9. Cerveseria Tower (1,429 reviews)
-10. Bar Bon-Mar (1,352 reviews)
-11. Il Cuore (1,286 reviews)
-12. Casa Coder (1,206 reviews)
-13. Little Bangkok (1,166 reviews)
-14. Brasería Costillar (1,159 reviews)
-15. Mirall de Tres (1,075 reviews)
-16. Xapatti (1,045 reviews)
-17. Ferran Cerro Restaurant (1,043 reviews)
-18. Vill Rus Restaurant (1,027 reviews)
+2. Tacos La Mexicanita (2,197 reviews)
+3. Vermuts Rofes (2,117 reviews)
+4. Khirganga Restaurant (1,883 reviews)
+5. Xivarri Gastronomía (1,763 reviews)
+6. Ciutat Gaudí (1,622 reviews)
+7. Cerveseria Tower (1,429 reviews)
+8. Bar Bon-Mar (1,352 reviews)
 19. Restaurant Cal Marc (1,013 reviews)
 20. Acarigua Arepera (970 reviews)
 21. Restaurant Lo Bon Profit (842 reviews)
-22. Restaurant La Comarca (778 reviews)
-23. Tapes i Tapes (693 reviews)
-24. Flaps (689 reviews)
-25. VÍTRIC Taverna Gastronòmica (677 reviews)
-
 ## Tech Stack
 
 - **Backend**: Python, Flask, APScheduler

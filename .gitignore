@@ -23,3 +23,5 @@ data/restaurants_cache.json
 # OS
 .DS_Store
 youtube_cookies.json
+data/browser_profile/
+logs/
