@@ -1,7 +1,7 @@
 import os
 
 # Screenshot interval (seconds)
-SCREENSHOT_INTERVAL = int(os.getenv('SCREENSHOT_INTERVAL', 30))  # 30 sec default
+SCREENSHOT_INTERVAL = int(os.getenv('SCREENSHOT_INTERVAL', 300))  # 5 min default
 
 # Party level thresholds: (max_people, level)
 PARTY_THRESHOLDS = [(0, 0), (2, 1), (5, 2), (10, 3), (20, 4), (50, 5), (70, 7), (100, 9), (999, 10)]
