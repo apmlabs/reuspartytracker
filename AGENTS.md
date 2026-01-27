@@ -10,9 +10,17 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 
 ## 📋 PROJECT STATUS
 
-**Phase**: Phase 6 - Polish (complete)
+**Phase**: Phase 6 - Polish (in progress)
 **Started**: January 26, 2026
 **GitHub**: apmlabs/reuspartytracker
+
+### Recent Updates (Jan 27, 2026)
+- ✅ Fixed restaurant open/closed status using Spain timezone
+- ✅ Non-blocking API: returns cached data instantly, background refresh every 15 min
+- ✅ Smart API optimization: skip closed restaurants, limit calls for no-busyness restaurants
+- ✅ Reduced from 39 to 22 restaurants (removed duplicates, archived low-priority)
+- ✅ API call logging to `logs/outscraper.log` for cost monitoring
+- ✅ Frontend shows "last updated" timestamp for restaurant data
 
 ---
 
@@ -25,7 +33,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │                         (APScheduler in app.py)                             │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                             │
-│  Every 30 seconds: update_party_data()                                      │
+│  Every 5 minutes: update_party_data()                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │                                                                     │   │
 │  │  1. SCREENSHOT CAPTURE (screenshot.py)                              │   │
@@ -36,21 +44,21 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │     └─► Kiro CLI vision analyzes screenshot                         │   │
 │  │     └─► Returns: people_count (int)                                 │   │
 │  │                                                                     │   │
-│  │  3. RESTAURANT DATA (restaurants.py)                                │   │
-│  │     └─► Check cache (15 min TTL)                                    │   │
-│  │     └─► If expired: call Outscraper API for Google Popular Times    │   │
-│  │     └─► Returns: {plaza: [{name, is_open, busyness}, ...]}          │   │
-│  │                                                                     │   │
-│  │  4. CALCULATE PARTY LEVEL                                           │   │
-│  │     └─► people_level = f(people_count)  [0-10 scale]                │   │
-│  │     └─► restaurant_level = avg_busyness / 20  [0-5 scale]           │   │
-│  │     └─► party_level = (people_level + restaurant_level) / 2         │   │
-│  │                                                                     │   │
-│  │  5. SAVE TO INFLUXDB (database.py)                                  │   │
-│  │     └─► Party: people_count, party_level                            │   │
-│  │     └─► Restaurants: per-restaurant busyness (see rules below)      │   │
-│  │                                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  Every 15 minutes: refresh_restaurant_data()                                │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │  SMART FETCHING (restaurants.py)                                    │   │
+│  │  └─► Skip closed restaurants (known hours)                          │   │
+│  │  └─► Skip no-busyness restaurants (except 14:00 & 21:00)            │   │
+│  │  └─► Skip unknown-hours restaurants outside 9am-11pm                │   │
+│  │  └─► Fetch only open restaurants with busyness data                 │   │
+│  │  └─► Save to cache + InfluxDB                                       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  API ENDPOINTS (always return cached data instantly)                        │
+│  └─► /api/restaurants - plaza restaurants with timestamp                    │
+│  └─► /api/top-restaurants - top 8 restaurants with timestamp                │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -60,7 +68,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │                                                                             │
 │  GET /api/party          → Current party data (people, level, timestamp)   │
 │  GET /api/restaurants    → Current restaurant busyness by plaza            │
-│  GET /api/top-restaurants → Top 20 restaurants with busyness/rating/reviews│
+│  GET /api/top-restaurants → Top 8 restaurants with busyness/rating/reviews │
 │  GET /api/screenshot     → Latest screenshot image                         │
 │  GET /api/history?hours=N        → Party history from InfluxDB             │
 │  GET /api/history/restaurants?hours=N → Restaurant avg history by plaza    │

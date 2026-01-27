@@ -22,13 +22,13 @@ def save_restaurant_data(restaurants):
         write_api = client.write_api(write_options=SYNCHRONOUS)
         for plaza, items in restaurants.items():
             for r in items:
-                # Closed = 0, open with data = actual value, open without data = skip
-                if not r.get('is_open'):
-                    busyness = 0
-                elif r.get('busyness') is not None:
+                # Has busyness = save it, closed + no busyness = 0, open + no busyness = skip
+                if r.get('busyness') is not None:
                     busyness = r.get('busyness')
+                elif not r.get('is_open'):
+                    busyness = 0
                 else:
-                    continue  # Open but no data - exclude from average
+                    continue  # Open but no data - exclude
                 point = Point("restaurant").tag("name", r['name']).tag("plaza", plaza).field("busyness", busyness)
                 write_api.write(bucket=INFLUX_BUCKET, record=point)
 
