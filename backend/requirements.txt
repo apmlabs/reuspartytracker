@@ -1,5 +1,6 @@
 flask
 apscheduler
-openai
-yt-dlp
 requests
+playwright
+python-dotenv
+influxdb-client

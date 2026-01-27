@@ -33,7 +33,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │     └─► Captures frame → screenshots/latest.png                     │   │
 │  │                                                                     │   │
 │  │  2. AI ANALYSIS (analyzer.py)                                       │   │
-│  │     └─► OpenAI GPT-4 Vision analyzes screenshot                     │   │
+│  │     └─► Kiro CLI vision analyzes screenshot                         │   │
 │  │     └─► Returns: people_count (int)                                 │   │
 │  │                                                                     │   │
 │  │  3. RESTAURANT DATA (restaurants.py)                                │   │
@@ -128,7 +128,7 @@ reuspartytracker/
 │
 ├── backend/
 │   ├── app.py                   # Flask server + scheduler
-│   ├── analyzer.py              # OpenAI GPT-4 Vision
+│   ├── analyzer.py              # Kiro CLI vision analysis
 │   ├── screenshot.py            # Playwright YouTube capture
 │   ├── restaurants.py           # Outscraper API + caching
 │   ├── database.py              # InfluxDB read/write
@@ -185,7 +185,7 @@ Chart aggregation window │ 5 min       │ database.py InfluxDB query
 ### Tech Stack
 - **Frontend**: HTML5, CSS3, JavaScript (vanilla)
 - **Backend**: Python 3, Flask
-- **AI**: OpenAI GPT-4 Vision API (or Claude)
+- **AI**: Kiro CLI (vision analysis via subprocess)
 - **Video**: yt-dlp + ffmpeg for YouTube screenshots
 - **Scheduling**: APScheduler
 - **Hosting**: This AWS EC2 instance

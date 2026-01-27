@@ -10,7 +10,7 @@ Watch the live stream, see how many people are partying, and check which restaur
 
 - 📺 Live YouTube stream screenshot of Plaça Mercadal
 - 🎉 AI-powered party level indicator (0-10)
-- 👥 Estimated crowd count via GPT-4 Vision
+- 👥 Estimated crowd count via Kiro CLI Vision
 - 🍽️ Restaurant busyness levels from Google Maps (14 plaza restaurants + Top 20 in Reus)
 - 📊 Historical charts (24h and 7d) for people count and restaurant busyness
 - 🌙 Dark & light themes
@@ -64,7 +64,7 @@ Watch the live stream, see how many people are partying, and check which restaur
 
 - **Backend**: Python, Flask, APScheduler
 - **Frontend**: HTML, CSS, JavaScript, Chart.js
-- **AI**: OpenAI GPT-4 Vision
+- **AI**: Kiro CLI Vision
 - **Video**: Playwright for YouTube screenshots
 - **Database**: InfluxDB (time-series)
 - **Restaurant Data**: Outscraper API (Google Maps)
@@ -76,7 +76,6 @@ cd backend
 pip install -r requirements.txt
 
 # Set environment variables in .env
-OPENAI_API_KEY=your-key
 OUTSCRAPER_API_KEY=your-key
 INFLUXDB_TOKEN=your-token
 
