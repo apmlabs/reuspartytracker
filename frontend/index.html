@@ -139,12 +139,13 @@
                         <div class="plaza-info"><div class="plaza"><h3>📍 ${name}</h3>`;
                     for (const r of restaurants) {
                         let cls, busy;
+                        const q = r.hours_known === false ? '?' : '';
                         if (!r.is_open) {
-                            cls = 'closed'; busy = 'Closed';
+                            cls = 'closed'; busy = 'Closed' + q;
                         } else if (r.busyness !== null) {
                             cls = 'included'; busy = r.busyness + '%';
                         } else {
-                            cls = 'excluded'; busy = 'Open';
+                            cls = 'excluded'; busy = 'Open' + q;
                         }
                         html += `<div class="restaurant ${cls}"><span>${r.name}</span><span class="busyness">${busy}</span></div>`;
                     }
@@ -190,9 +191,10 @@
                     const r = filtered[i];
                     const id = 'top-' + i;
                     let status, cls;
-                    if (!r.is_open) { status = 'Closed'; cls = 'closed'; }
+                    const q = r.hours_known === false ? '?' : '';
+                    if (!r.is_open) { status = 'Closed' + q; cls = 'closed'; }
                     else if (r.busyness !== null) { status = r.busyness + '%'; cls = 'included'; }
-                    else { status = 'Open'; cls = 'excluded'; }
+                    else { status = 'Open' + q; cls = 'excluded'; }
                     html += `<div class="top-rest-row">
                         <div class="top-rest-header">
                             <span class="top-rest-name ${cls}">${i+1}. ${r.name}</span>
@@ -254,19 +256,13 @@
                 const all = [...Object.values(plazas).flat(), ...top];
                 for (const rest of all) {
                     const coord = COORDS[rest.name];
-                    if (!coord) continue;
-                    let color, busyness = rest.busyness;
-                    if (!rest.is_open) { color = '#666'; }
-                    else if (busyness === null) { color = '#888'; }
-                    else {
-                        const t = Math.min(busyness / 100, 1);
-                        const red = Math.round(255 * t);
-                        const blue = Math.round(255 * (1 - t));
-                        color = `rgb(${red},50,${blue})`;
-                    }
+                    // Only show on map if open AND has busyness data
+                    if (!coord || !rest.is_open || rest.busyness === null) continue;
+                    const t = Math.min(rest.busyness / 100, 1);
+                    const color = `rgb(${Math.round(255*t)},50,${Math.round(255*(1-t))})`;
                     const marker = L.circleMarker([coord[0], coord[1]], {
                         radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.8
-                    }).addTo(map).bindPopup(`<b>${rest.name}</b><br>${rest.is_open ? (busyness !== null ? busyness + '% busy' : 'Open') : 'Closed'}`);
+                    }).addTo(map).bindPopup(`<b>${rest.name}</b><br>${rest.busyness}% busy`);
                     markers.push(marker);
                 }
             } catch (e) { console.error(e); }

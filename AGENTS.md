@@ -106,6 +106,8 @@ Restaurant State          │ Saved to DB │ Color in UI │ Effect on Average
 Open + has busyness %     │ actual %    │ Green       │ Included
 Closed                    │ 0           │ Red         │ Included (as 0)
 Open + no data from Google│ NOT saved   │ Grey        │ Excluded
+
+Note: If Google doesn't provide working hours, we assume 9am-11pm and show "?" next to status.
 ```
 
 ### InfluxDB Schema
@@ -176,10 +178,10 @@ Final Party Level = (People Level + Restaurant Level) / 2
 ```
 Component                │ Interval    │ Source
 ─────────────────────────┼─────────────┼─────────────────────────
-Screenshot capture       │ 30 sec      │ config.py SCREENSHOT_INTERVAL
-AI analysis              │ 30 sec      │ (with screenshot)
+Screenshot capture       │ 5 min       │ config.py SCREENSHOT_INTERVAL
+AI analysis              │ 5 min       │ (with screenshot)
 Restaurant API call      │ 15 min      │ restaurants.py CACHE_TTL
-Save to InfluxDB         │ 30 sec      │ (with screenshot)
+Save to InfluxDB         │ 5 min       │ (with screenshot)
 Frontend screenshot      │ 30 sec      │ index.html setInterval
 Frontend party data      │ 60 sec      │ index.html setInterval
 Frontend restaurants     │ 15 min      │ index.html setInterval
