@@ -18,10 +18,14 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 - ✅ Split people counting: street vs terrace (restaurant patrons)
 - ✅ Unified chart with 5 metrics: Total, Street, Terrace, Cars, Police
 - ✅ Time range selector: 24h, 7d, 30d, 1y
-- ✅ Clickable legend to toggle lines
-- ✅ Hide plazas with no busyness data
-- ✅ Added Cars and Police tracking
+- ✅ Clickable legend to toggle lines on/off
+- ✅ Hide plazas with no busyness data (e.g., Plaça del Teatre)
+- ✅ Added Cars tracking (vehicle count in plaza)
+- ✅ Added Police tracking with scoring: cars×2 + vans×4 + uniformed×1
 - ✅ Red header alert when police detected
+- ✅ Raw police data saved to DB (police_cars, police_vans, police_uniformed)
+- ✅ Fixed cache name mismatch bug (query vs API names)
+- ✅ Closed restaurants now return/save busyness=0
 - ✅ Daily InfluxDB backup (3am, keeps 7 days)
 
 ### Previous Updates (Jan 27, 2026)
@@ -102,15 +106,13 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  ├─────────────────────────────────────────────────────────────────────┤   │
 │  │ Screenshot from YouTube live stream                                 │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ People Charts: 24h (stacked) | 7d (stacked)                         │   │
+│  │ Unified Chart: 5 lines (Total, Street, Terrace, Cars, Police)       │   │
+│  │   - Time range buttons: 24h, 7d, 30d, 1y                            │   │
+│  │   - Clickable legend to toggle lines                                │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Cars Charts: 24h | 7d                                               │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Police Charts: 24h | 7d                                             │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Plaza Teatre:      Restaurants (20%) | Charts 24h/7d (80%)          │   │
 │  │ Plaza Mercadal:    Restaurants (20%) | Charts 24h/7d (80%)          │   │
 │  │ Plaza Evarist:     Restaurants (20%) | Charts 24h/7d (80%)          │   │
+│  │ (Plazas hidden if no busyness data > 0)                             │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
 │  │ Restaurant Heatmap: Leaflet map with color-coded markers            │   │
 │  │   Blue = low busyness, Red = high busyness, Grey = closed/no data   │   │
@@ -138,7 +140,7 @@ Note: If Google doesn't provide working hours, we assume 9am-11pm and show "?" n
 Bucket: party_data (infinite retention)
 
 Measurement: party
-  Fields: people_count (int), party_level (int), car_count (int), police_score (int), police_cars (int), police_vans (int), police_uniformed (int)
+  Fields: people_count (int), street_count (int), terrace_count (int), party_level (int), car_count (int), police_score (int), police_cars (int), police_vans (int), police_uniformed (int)
   
 Measurement: restaurant  
   Tags: name (string), plaza (string)
