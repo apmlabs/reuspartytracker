@@ -11,10 +11,10 @@ INFLUX_BUCKET = "party_data"
 def get_client():
     return InfluxDBClient(url=INFLUX_URL, token=INFLUX_TOKEN, org=INFLUX_ORG)
 
-def save_party_data(people_count, party_level):
+def save_party_data(people_count, party_level, car_count=0, police_score=0, police_cars=0, police_vans=0, police_uniformed=0):
     with get_client() as client:
         write_api = client.write_api(write_options=SYNCHRONOUS)
-        point = Point("party").field("people_count", people_count).field("party_level", party_level)
+        point = Point("party").field("people_count", people_count).field("party_level", party_level).field("car_count", car_count).field("police_score", police_score).field("police_cars", police_cars).field("police_vans", police_vans).field("police_uniformed", police_uniformed)
         write_api.write(bucket=INFLUX_BUCKET, record=point)
 
 def save_restaurant_data(restaurants):
@@ -37,12 +37,23 @@ def get_party_history(hours=24):
         query = f'''from(bucket: "{INFLUX_BUCKET}")
             |> range(start: -{hours}h)
             |> filter(fn: (r) => r._measurement == "party")
-            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'''
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> sort(columns: ["_time"])'''
         result = client.query_api().query(query)
         data = []
         for table in result:
             for record in table.records:
-                data.append({"timestamp": record.get_time().isoformat(), "people_count": record.values.get("people_count"), "party_level": record.values.get("party_level")})
+                data.append({
+                    "timestamp": record.get_time().isoformat(),
+                    "people_count": record.values.get("people_count"),
+                    "party_level": record.values.get("party_level"),
+                    "car_count": record.values.get("car_count") or 0,
+                    "police_score": record.values.get("police_score") or 0,
+                    "police_cars": record.values.get("police_cars") or 0,
+                    "police_vans": record.values.get("police_vans") or 0,
+                    "police_uniformed": record.values.get("police_uniformed") or 0
+                })
+        data.sort(key=lambda x: x['timestamp'])
         return data
 
 def get_restaurant_history(hours=24):

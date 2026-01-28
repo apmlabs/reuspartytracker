@@ -11,8 +11,10 @@ Watch the live stream, see how many people are partying, and check which restaur
 - 📺 Live YouTube stream screenshot of Plaça Mercadal
 - 🎉 AI-powered party level indicator (0-10)
 - 👥 Estimated crowd count via Kiro CLI Vision
+- 🚗 Vehicle count tracking
+- 🚔 Police presence detection with alert (cars×2 + vans×4 + uniformed×1)
 - 🍽️ Restaurant busyness levels from Google Maps (14 plaza + 5 top restaurants)
-- 📊 Historical charts (24h and 7d) for people count and restaurant busyness
+- 📊 Historical charts (24h and 7d) for people, cars, police, and restaurant busyness
 - 🗺️ Interactive heatmap showing restaurant busyness across Reus
 - 🌙 Dark & light themes
 - 💾 InfluxDB time-series storage with infinite retention

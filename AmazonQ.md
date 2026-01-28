@@ -165,3 +165,25 @@ yt-dlp --skip-download --write-thumbnail https://www.youtube.com/watch?v=L9HyLjR
 3. Khirganga Restaurant (1,884 reviews)
 4. Xivarri Gastronomía (1,763 reviews)
 5. Ciutat Gaudí (1,623 reviews)
+
+---
+
+## Session 4 - January 28, 2026 (continued)
+
+### Goals
+- [x] Add Cars tracking (vehicle count)
+- [x] Add Police tracking (cars, vans, uniformed + score)
+- [x] Add 4 new charts (Cars 24h/7d, Police 24h/7d)
+- [x] Red header alert when police detected
+- [x] Save raw police data to DB
+
+### Implementation
+- **analyzer.py**: Updated AI prompt to return JSON with people, cars, police_cars, police_vans, police_uniformed
+- **database.py**: Added 5 new fields to party measurement (car_count, police_score, police_cars, police_vans, police_uniformed)
+- **app.py**: Process all fields, calculate police_score (cars×2 + vans×4 + uniformed×1)
+- **index.html**: Added Cars/Police to header, 4 new charts, red background on police detection
+
+### Police Score Formula
+```
+police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
+```
