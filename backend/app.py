@@ -7,7 +7,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
-from analyzer import get_party_level, analyze_image
+from analyzer import get_party_level, analyze_image, calc_police_score, calc_police_score
 from restaurants import fetch_all_restaurants, fetch_top_restaurants
 from database import save_party_data, save_restaurant_data, save_top_restaurant_data, get_party_history, get_restaurant_history, get_top_restaurant_history
 
@@ -19,7 +19,7 @@ def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE) as f:
             return json.load(f)
-    return {"people_count": 0, "party_level": 0, "last_updated": None, "error": None}
+    return {"people_count": 0, "party_level": 0, "car_count": 0, "police_count": 0, "police_score": 0, "police_cars": 0, "police_vans": 0, "police_uniformed": 0, "last_updated": None, "error": None}
 
 def save_data(data):
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
@@ -52,14 +52,28 @@ def update_party_data():
     data = load_data()
     try:
         image_path = capture_youtube_frame(YOUTUBE_URL)
-        people_count = analyze_image(image_path)
+        analysis = analyze_image(image_path)
+        people_count = analysis["people"]
+        car_count = analysis["cars"]
+        police_cars = analysis["police_cars"]
+        police_vans = analysis["police_vans"]
+        police_uniformed = analysis["police_uniformed"]
+        police_score = calc_police_score(police_cars, police_vans, police_uniformed)
+        police_count = police_cars + police_vans + police_uniformed
+        
         data["last_screenshot"] = image_path
         data["people_count"] = people_count
+        data["car_count"] = car_count
+        data["police_count"] = police_count
+        data["police_score"] = police_score
+        data["police_cars"] = police_cars
+        data["police_vans"] = police_vans
+        data["police_uniformed"] = police_uniformed
         data["party_level"] = get_combined_party_level(people_count)
         data["last_updated"] = datetime.now().isoformat()
         data["error"] = None
-        save_party_data(people_count, data["party_level"])
-        print(f"Screenshot: {image_path}, People: {people_count}, Level: {data['party_level']}")
+        save_party_data(people_count, data["party_level"], car_count, police_score, police_cars, police_vans, police_uniformed)
+        print(f"Screenshot: {image_path}, People: {people_count}, Cars: {car_count}, Police: {police_count} (score: {police_score}), Level: {data['party_level']}")
     except Exception as e:
         data["error"] = str(e)
         data["last_updated"] = datetime.now().isoformat()

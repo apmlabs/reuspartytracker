@@ -21,7 +21,11 @@
         .header-stat { font-size: 1.5em; font-weight: bold; }
         .header-stat.party { color: #ff6b6b; }
         .header-stat.people { color: #2ecc71; }
+        .header-stat.cars { color: #3498db; }
+        .header-stat.police { color: #e74c3c; }
         .header-stat .label { font-size: 0.5em; color: var(--muted); font-weight: normal; }
+        .police-alert { background: #c0392b !important; }
+        .police-alert header { background: #c0392b; }
         .last-updated { color: var(--muted); text-align: center; font-size: 0.9em; margin-bottom: 20px; }
         .error { color: #ff6b6b; text-align: center; padding: 10px; }
         .people-charts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
@@ -63,6 +67,8 @@
             <div class="header-stats">
                 <div class="header-stat party"><span id="party-level">-</span>/10 <span class="label">Party</span></div>
                 <div class="header-stat people">~<span id="people-count">-</span> <span class="label">People</span></div>
+                <div class="header-stat cars"><span id="car-count">-</span> <span class="label">Cars</span></div>
+                <div class="header-stat police"><span id="police-count">-</span> (<span id="police-score">-</span>) <span class="label">Police</span></div>
             </div>
             <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
         </header>
@@ -83,6 +89,22 @@
             <div class="chart-box">
                 <div class="chart-label">People - Last 7 Days</div>
                 <canvas id="party-weekly" height="80"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-label">Cars - Last 24 Hours</div>
+                <canvas id="cars-daily" height="80"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-label">Cars - Last 7 Days</div>
+                <canvas id="cars-weekly" height="80"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-label">Police Score - Last 24 Hours</div>
+                <canvas id="police-daily" height="80"></canvas>
+            </div>
+            <div class="chart-box">
+                <div class="chart-label">Police Score - Last 7 Days</div>
+                <canvas id="police-weekly" height="80"></canvas>
             </div>
         </div>
         
@@ -128,7 +150,15 @@
                 const data = await (await fetch('/api/party')).json();
                 document.getElementById('party-level').textContent = data.party_level;
                 document.getElementById('people-count').textContent = data.people_count;
+                document.getElementById('car-count').textContent = data.car_count || 0;
+                document.getElementById('police-count').textContent = data.police_count || 0;
+                document.getElementById('police-score').textContent = data.police_score || 0;
                 document.getElementById('error').textContent = data.error || '';
+                if ((data.police_score || 0) > 0) {
+                    document.body.classList.add('police-alert');
+                } else {
+                    document.body.classList.remove('police-alert');
+                }
             } catch (e) { document.getElementById('error').textContent = 'Failed to load data'; }
         }
 
@@ -176,6 +206,10 @@
                 ]);
                 makeChart('party-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.people_count), '#ff6b6b');
                 makeChart('party-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.people_count), '#ff6b6b');
+                makeChart('cars-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.car_count || 0), '#3498db');
+                makeChart('cars-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.car_count || 0), '#3498db');
+                makeChart('police-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.police_score || 0), '#e74c3c');
+                makeChart('police-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.police_score || 0), '#e74c3c');
                 for (const plaza of plazaOrder) {
                     const d = restDaily[plaza] || [], w = restWeekly[plaza] || [], color = plazaColors[plaza];
                     makeChart(`${plaza}-daily`, d.map(x => new Date(x.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), d.map(x => x.busyness), color);

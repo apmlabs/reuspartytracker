@@ -15,11 +15,13 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 **GitHub**: apmlabs/reuspartytracker
 
 ### Recent Updates (Jan 28, 2026)
-- ✅ Fixed cache name mismatch bug (query names vs API-returned names)
-- ✅ Closed restaurants now correctly return/save busyness=0
-- ✅ Updated Top 5 to highest-reviewed restaurants with busyness data
-- ✅ Whitelist now has 11 restaurants (6 plaza + 5 top)
-- ✅ API calls reduced to ~0-11 per refresh (only open + whitelist)
+- ✅ Added Cars tracking (count of vehicles in plaza)
+- ✅ Added Police tracking (cars×2 + vans×4 + uniformed×1 scoring)
+- ✅ Red header alert when police detected
+- ✅ 4 new charts: Cars 24h/7d, Police 24h/7d
+- ✅ Raw police data saved to DB (cars, vans, uniformed counts)
+- ✅ Fixed cache name mismatch bug (query vs API names)
+- ✅ Closed restaurants now return/save busyness=0
 
 ### Previous Updates (Jan 27, 2026)
 - ✅ Fixed restaurant open/closed status using Spain timezone
@@ -48,7 +50,8 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │                                                                     │   │
 │  │  2. AI ANALYSIS (analyzer.py)                                       │   │
 │  │     └─► Kiro CLI vision analyzes screenshot                         │   │
-│  │     └─► Returns: people_count (int)                                 │   │
+│  │     └─► Returns: people_count, car_count, police breakdown          │   │
+│  │     └─► Calculates police_score: cars×2 + vans×4 + uniformed×1      │   │
 │  │                                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
@@ -94,11 +97,15 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │                                                                             │
 │  Layout:                                                                    │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ Header: Title | Party Level | People Count | Theme Toggle           │   │
+│  │ Header: Title | Party Level | People Count | Cars | Police | Theme  │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
 │  │ Screenshot from YouTube live stream                                 │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
 │  │ People Charts: 24h (stacked) | 7d (stacked)                         │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Cars Charts: 24h | 7d                                               │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ Police Charts: 24h | 7d                                             │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
 │  │ Plaza Teatre:      Restaurants (20%) | Charts 24h/7d (80%)          │   │
 │  │ Plaza Mercadal:    Restaurants (20%) | Charts 24h/7d (80%)          │   │
@@ -130,7 +137,7 @@ Note: If Google doesn't provide working hours, we assume 9am-11pm and show "?" n
 Bucket: party_data (infinite retention)
 
 Measurement: party
-  Fields: people_count (int), party_level (int)
+  Fields: people_count (int), party_level (int), car_count (int), police_score (int), police_cars (int), police_vans (int), police_uniformed (int)
   
 Measurement: restaurant  
   Tags: name (string), plaza (string)
