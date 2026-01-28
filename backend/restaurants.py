@@ -218,10 +218,13 @@ def fetch_all_restaurants(force_refresh=False):
     
     # Return cached data if not forcing refresh
     if not force_refresh and cached_data:
-        # Zero busyness for closed restaurants
+        # Recalculate is_open and zero busyness for closed restaurants
         for plaza, items in cached_data.items():
             for r in items:
-                if not r.get('is_open'):
+                is_open, hours_known = is_open_now(r.get('working_hours'))
+                r['is_open'] = is_open
+                r['hours_known'] = hours_known
+                if not is_open:
                     r['busyness'] = 0
         return cached_data, cache.get('timestamp', 0)
     
