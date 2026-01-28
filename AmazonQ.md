@@ -218,3 +218,45 @@ After: AI returns street=18, terrace=12, total=30 (more accurate)
 - Removed separate Cars and Police charts
 - Single unified chart with 5 toggleable lines
 - Legend on left, time buttons on right (same row)
+
+
+## Session 6 - January 28, 2026 (afternoon)
+
+### Goals
+- [x] Split AI analysis into two separate kiro-cli calls
+- [ ] Improve police detection prompt recall
+
+### Implementation
+- **analyzer.py**: Now makes 2 calls:
+  1. People/cars prompt (street, terrace, cars)
+  2. Police-only prompt (focused detection)
+- Removed `--agent party-tracker` flag, using default agent
+
+### Police Detection Testing
+Test file: `test_screenshots.md` with 10 police images, 6 no-police images
+
+Current results:
+- **False positives**: 0/6 (100% precision) ✓
+- **True positives**: 4/10 (40% recall)
+- Detected: 091346, 093346, 094846 (clear view)
+- Missed: 100650, 102321, 103321, 104352 (obscured/distant)
+
+### Current Police Prompt
+```
+POLICE DETECTION ONLY - Ignore people and regular cars.
+
+### Policía Local (Reus) - MOST COMMON
+Small car (NOT a van) with THREE-TONE paint:
+- Bottom/lower body: BRIGHT YELLOW
+- Middle/upper doors: DARK BLUE  
+- Roof: WHITE
+
+### Other Police Types
+- Mossos d'Esquadra: Dark blue car with RED stripe
+- Guardia Civil: Dark GREEN vehicles
+- Policía Nacional: Blue and white vehicles
+- Any vehicle with BLUE FLASHING LIGHTS
+
+### NOT Police
+- DHL/Correos: Large yellow VANS (solid yellow, no blue)
+```
