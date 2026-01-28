@@ -25,3 +25,4 @@ data/restaurants_cache.json
 youtube_cookies.json
 data/browser_profile/
 logs/
+backups/
