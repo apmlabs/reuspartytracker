@@ -22,6 +22,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 - ✅ Raw police data saved to DB (cars, vans, uniformed counts)
 - ✅ Fixed cache name mismatch bug (query vs API names)
 - ✅ Closed restaurants now return/save busyness=0
+- ✅ Daily InfluxDB backup (3am, keeps 7 days)
 
 ### Previous Updates (Jan 27, 2026)
 - ✅ Fixed restaurant open/closed status using Spain timezone

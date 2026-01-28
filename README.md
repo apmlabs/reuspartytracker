@@ -18,6 +18,7 @@ Watch the live stream, see how many people are partying, and check which restaur
 - 🗺️ Interactive heatmap showing restaurant busyness across Reus
 - 🌙 Dark & light themes
 - 💾 InfluxDB time-series storage with infinite retention
+- 🔄 Daily automated backups (7-day retention)
 - 💰 Smart API optimization (~$0.50-1.00/day vs $9+)
 
 ## Tracked Locations
