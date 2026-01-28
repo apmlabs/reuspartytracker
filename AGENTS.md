@@ -14,11 +14,17 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 **Started**: January 26, 2026
 **GitHub**: apmlabs/reuspartytracker
 
-### Recent Updates (Jan 27, 2026)
+### Recent Updates (Jan 28, 2026)
+- ✅ Fixed cache name mismatch bug (query names vs API-returned names)
+- ✅ Closed restaurants now correctly return/save busyness=0
+- ✅ Updated Top 5 to highest-reviewed restaurants with busyness data
+- ✅ Whitelist now has 11 restaurants (6 plaza + 5 top)
+- ✅ API calls reduced to ~0-11 per refresh (only open + whitelist)
+
+### Previous Updates (Jan 27, 2026)
 - ✅ Fixed restaurant open/closed status using Spain timezone
 - ✅ Non-blocking API: returns cached data instantly, background refresh every 15 min
 - ✅ Smart API optimization: skip closed restaurants, limit calls for no-busyness restaurants
-- ✅ Reduced from 39 to 22 restaurants (removed duplicates, archived low-priority)
 - ✅ API call logging to `logs/outscraper.log` for cost monitoring
 - ✅ Frontend shows "last updated" timestamp for restaurant data
 
@@ -49,16 +55,17 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  Every 15 minutes: refresh_restaurant_data()                                │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │
 │  │  SMART FETCHING (restaurants.py)                                    │   │
-│  │  └─► Skip closed restaurants (known hours)                          │   │
-│  │  └─► Skip no-busyness restaurants (except 14:00 & 21:00)            │   │
+│  │  └─► Skip closed restaurants (known hours) → save 0 to DB           │   │
+│  │  └─► Skip no-busyness restaurants (except 21:00 daily check)        │   │
 │  │  └─► Skip unknown-hours restaurants outside 9am-11pm                │   │
-│  │  └─► Fetch only open restaurants with busyness data                 │   │
+│  │  └─► Fetch only open restaurants in whitelist                       │   │
+│  │  └─► Substring matching for cache lookup (query vs API names)       │   │
 │  │  └─► Save to cache + InfluxDB                                       │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 │  API ENDPOINTS (always return cached data instantly)                        │
 │  └─► /api/restaurants - plaza restaurants with timestamp                    │
-│  └─► /api/top-restaurants - top 8 restaurants with timestamp                │
+│  └─► /api/top-restaurants - top 5 restaurants with timestamp                │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
@@ -68,7 +75,7 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │                                                                             │
 │  GET /api/party          → Current party data (people, level, timestamp)   │
 │  GET /api/restaurants    → Current restaurant busyness by plaza            │
-│  GET /api/top-restaurants → Top 8 restaurants with busyness/rating/reviews │
+│  GET /api/top-restaurants → Top 5 restaurants with busyness/rating/reviews │
 │  GET /api/screenshot     → Latest screenshot image                         │
 │  GET /api/history?hours=N        → Party history from InfluxDB             │
 │  GET /api/history/restaurants?hours=N → Restaurant avg history by plaza    │
@@ -100,8 +107,8 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │ Restaurant Heatmap: Leaflet map with color-coded markers            │   │
 │  │   Blue = low busyness, Red = high busyness, Grey = closed/no data   │   │
 │  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Top 25 Restaurants: Each with name, reviews, rating, 24h/7d charts  │   │
-│  │   (filtered to show only those with historical data)                │   │
+│  │ Top 5 Restaurants: Each with name, reviews, rating, 24h/7d charts   │   │
+│  │   (highest-reviewed restaurants with Popular Times data)            │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
 │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘

@@ -118,3 +118,50 @@ yt-dlp --skip-download --write-thumbnail https://www.youtube.com/watch?v=L9HyLjR
 ### API Keys Needed
 - OpenAI API key (for GPT-4 Vision)
 - Google Maps API key (for Places API - restaurant data)
+
+
+---
+
+## Session 3 - January 28, 2026
+
+### Goals
+- [x] Fix API cost issues - too many calls overnight
+- [x] Fix cache name mismatch bug
+- [x] Fix closed restaurants showing wrong busyness
+
+### Progress
+
+**08:35** - Investigated API calls from last 6 hours
+- Found 54 calls for Tacos La Mexicanita and Xivarri Gastronomía overnight
+- Both were closed but still being fetched
+
+**08:44** - Fixed cache name mismatch in `fetch_top_restaurants`
+- Same bug as plaza restaurants: query name "Tacos La Mexicanita" didn't match cache key "Tacos La Mexicanita Reus"
+- Added `find_cached()` substring matching function
+
+**08:40** - Fixed closed restaurants showing cached busyness
+- Closed restaurants were returning old busyness from cache instead of 0
+- Fixed in both API response and DB save logic
+- Now: closed = 0 busyness always
+
+**09:03** - Verified fix working
+- All closed restaurants now being skipped
+- Zero API calls for closed restaurants since fix
+
+### Bugs Fixed
+1. **Cache name mismatch** (fetch_top_restaurants) - query names don't match API-returned names
+2. **Closed restaurants busyness** - was showing cached value, now shows 0
+3. **DB save order** - was checking busyness before is_open, now checks is_open first
+
+### Current State
+- **Whitelist**: 11 restaurants (6 plaza + 5 top)
+- **API calls**: ~0-11 per 15-min refresh (only open + whitelist)
+- **21:00 check**: Fetches all archived to discover new Popular Times data
+- **Estimated daily cost**: ~$0.50-1.00 (down from $9+)
+
+### Top 5 Restaurants (by reviews, with busyness data)
+1. Restaurant del Museu del Vermut (4,300 reviews)
+2. Tacos La Mexicanita (2,197 reviews)
+3. Khirganga Restaurant (1,884 reviews)
+4. Xivarri Gastronomía (1,763 reviews)
+5. Ciutat Gaudí (1,623 reviews)

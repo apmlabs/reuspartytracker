@@ -43,39 +43,46 @@ RESTAURANTS = {
     ]
 }
 
-# Top 10 only - reduced from 25 to save API costs
-# Note: La Presó and Saona already in plaza lists, not duplicated here
+# Top 5 restaurants with confirmed Popular Times data (not in plaza lists)
 TOP_RESTAURANTS = [
     "Restaurant del Museu del Vermut, Reus",
     "Tacos La Mexicanita, Reus",
-    "Vermuts Rofes, Reus",
     "Khirganga Restaurant, Reus",
     "Xivarri Gastronomía, Reus",
     "Ciutat Gaudí, Reus",
-    "Cerveseria Tower, Reus",
-    "Bar Bon-Mar, Reus",
 ]
 
-# Archived - kept for DB history, no API calls
+# Archived - no Popular Times data or lower priority
 TOP_RESTAURANTS_ARCHIVED = [
+    "Vermuts Rofes, Reus",
+    "Cerveseria Tower, Reus",
+    "Bar Bon-Mar, Reus",
+    "Xapatti, Reus",
+    "Restaurant Cal Marc, Reus",
+    "Flaps, Reus",
+    "VÍTRIC Taverna Gastronòmica, Reus",
     "Il Cuore, Reus",
-    "Casa Coder, Reus",
     "Little Bangkok, Reus",
     "Brasería Costillar de Reus",
     "Mirall de Tres, Reus",
-    "Xapatti, Reus",
     "Ferran Cerro Restaurant, Reus",
-    "Vill Rus Restaurant, Reus",
-    "Restaurant Cal Marc, Reus",
     "Acarigua Arepera, Reus",
     "Restaurant Lo Bon Profit, Reus",
     "Restaurant La Comarca, Reus",
     "Tapes i Tapes, Reus",
-    "Flaps, Reus",
     "VÍTRIC Taverna Gastronòmica, Reus",
 ]
 
 DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+# Restaurants confirmed to have Google Popular Times data (based on historical DB analysis)
+RESTAURANTS_WITH_POPULAR_TIMES = {
+    # Plaza restaurants
+    'Roslena Mercadal', 'Déu n\'hi Do', 'La Presó', 'Casa Coder', 'Saona Reus', 'Sibuya',
+    # Top 5 restaurants
+    'Restaurant del Museu del Vermut', 'Tacos La Mexicanita', 'Khirganga Restaurant',
+    'Xivarri Gastronomía', 'Ciutat Gaudí'
+}
 
 def should_fetch_restaurant(cached_restaurant, name=""):
     """Determine if we should fetch fresh data for this restaurant."""
@@ -84,37 +91,34 @@ def should_fetch_restaurant(cached_restaurant, name=""):
     now = datetime.now(spain)
     hour = now.hour
     
+    # Check whitelist FIRST (before cache check)
+    has_popular_times = any(pt in name for pt in RESTAURANTS_WITH_POPULAR_TIMES)
+    
+    # No Popular Times data - only fetch at 21:00 regardless of cache
+    if not has_popular_times:
+        if hour != 21:
+            api_logger.info(f" Skipping {name}: no popular times, not 21:00")
+            return False
+        return True
+    
+    # Has Popular Times but no cache - must fetch
     if not cached_restaurant:
-        return True  # No cache, must fetch
+        return True
     
     hours_known = cached_restaurant.get('hours_known', False)
     is_open = cached_restaurant.get('is_open', True)
-    has_busyness = cached_restaurant.get('busyness') is not None
     
-    # Restaurant with known hours and currently closed - skip always
+    # Closed - skip
     if hours_known and not is_open:
         api_logger.info(f" Skipping {name}: closed")
         return False
     
-    # Restaurant with unknown hours - only fetch during assumed open hours (9-23)
+    # Unknown hours - only fetch 9-23
     if not hours_known:
         if not (9 <= hour < 23):
             api_logger.info(f" Skipping {name}: unknown hours, outside 9-23")
             return False
-        # Within 9-23, but if no busyness data, only at 14:00/21:00
-        if not has_busyness and hour not in (14, 21):
-            api_logger.info(f" Skipping {name}: no busyness, not 14:00/21:00")
-            return False
-        return True
     
-    # Known hours, open - if no busyness data, only fetch at 14:00 and 21:00
-    if not has_busyness:
-        if hour not in (14, 21):
-            api_logger.info(f" Skipping {name}: no busyness, not 14:00/21:00")
-            return False
-        return True
-    
-    # Open restaurant with known hours and busyness data - fetch
     return True
 
 def is_open_now(working_hours):
@@ -213,13 +217,25 @@ def fetch_all_restaurants(force_refresh=False):
     
     # Return cached data if not forcing refresh
     if not force_refresh and cached_data:
+        # Zero busyness for closed restaurants
+        for plaza, items in cached_data.items():
+            for r in items:
+                if not r.get('is_open'):
+                    r['busyness'] = 0
         return cached_data, cache.get('timestamp', 0)
     
-    # Build lookup of cached restaurants by name
+    # Build lookup of cached restaurants by query name (substring match)
     cached_by_name = {}
     for plaza_list in cached_data.values():
         for r in plaza_list:
             cached_by_name[r.get('name', '')] = r
+    
+    def find_cached(query_name):
+        """Find cached restaurant by substring match."""
+        for cached_name, data in cached_by_name.items():
+            if query_name in cached_name or cached_name in query_name:
+                return data
+        return None
     
     # Fetch fresh data (smart: skip closed restaurants)
     result = {}
@@ -228,7 +244,7 @@ def fetch_all_restaurants(force_refresh=False):
         result[plaza] = []
         for query in restaurants:
             name = query.split(',')[0]
-            cached_r = cached_by_name.get(name)
+            cached_r = find_cached(name)
             
             if should_fetch_restaurant(cached_r, name):
                 data = fetch_restaurant_data(query)
@@ -240,7 +256,10 @@ def fetch_all_restaurants(force_refresh=False):
                 else:
                     result[plaza].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True, "hours_known": False})
             elif cached_r:
-                result[plaza].append(cached_r)  # Use cached, no fetch needed
+                # Use cached, but zero busyness if closed
+                if not cached_r.get('is_open'):
+                    cached_r = {**cached_r, 'busyness': 0}
+                result[plaza].append(cached_r)
             else:
                 result[plaza].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True, "hours_known": False})
     
@@ -257,6 +276,10 @@ def fetch_all_restaurants(force_refresh=False):
 
 def fetch_top_restaurants(force_refresh=False):
     """Return cached data immediately with timestamp. Refresh only if forced."""
+    import pytz
+    spain = pytz.timezone('Europe/Madrid')
+    hour = datetime.now(spain).hour
+    
     cache_file = os.path.join(os.path.dirname(__file__), '..', 'data', 'top_restaurants_cache.json')
     cache = {}
     if os.path.exists(cache_file):
@@ -264,17 +287,27 @@ def fetch_top_restaurants(force_refresh=False):
             cache = json.load(f)
     
     cached_data = cache.get('data', [])
+    top_names = {q.split(',')[0] for q in TOP_RESTAURANTS}
     
     if not force_refresh and cached_data:
-        return cached_data, cache.get('timestamp', 0)
+        # Only return the 5 TOP_RESTAURANTS, not archived ones
+        filtered = [r for r in cached_data if any(n in r.get('name', '') for n in top_names)]
+        return filtered, cache.get('timestamp', 0)
     
-    # Build lookup by name
+    # Build lookup by name (substring match)
     cached_by_name = {r.get('name', ''): r for r in cached_data}
     
+    def find_cached(query_name):
+        for cached_name, data in cached_by_name.items():
+            if query_name in cached_name or cached_name in query_name:
+                return data
+        return None
+    
+    # Fetch main top restaurants
     result = []
     for query in TOP_RESTAURANTS:
         name = query.split(',')[0]
-        cached_r = cached_by_name.get(name)
+        cached_r = find_cached(name)
         
         if should_fetch_restaurant(cached_r, name):
             data = fetch_restaurant_data(query)
@@ -284,6 +317,20 @@ def fetch_top_restaurants(force_refresh=False):
                 result.append(cached_r)
         elif cached_r:
             result.append(cached_r)
+        else:
+            # No cache, fetch anyway to get basic info
+            data = fetch_restaurant_data(query)
+            if data:
+                result.append(data)
+    
+    # Fetch archived restaurants only at 21:00
+    if hour == 21:
+        for query in TOP_RESTAURANTS_ARCHIVED:
+            name = query.split(',')[0]
+            data = fetch_restaurant_data(query)
+            if data and data.get('busyness') is not None:
+                api_logger.info(f" FOUND busyness for archived: {name} = {data.get('busyness')}%")
+                result.append(data)
     
     # Only save if we got some data
     if result:
@@ -291,10 +338,13 @@ def fetch_top_restaurants(force_refresh=False):
         os.makedirs(os.path.dirname(cache_file), exist_ok=True)
         with open(cache_file, 'w') as f:
             json.dump({"timestamp": ts, "data": result}, f)
-        return result, ts
+        # Return only TOP_RESTAURANTS (not archived)
+        filtered = [r for r in result if any(n in r.get('name', '') for n in top_names)]
+        return filtered, ts
     
     # Return old cache if refresh failed
-    return cached_data, cache.get('timestamp', 0)
+    filtered = [r for r in cached_data if any(n in r.get('name', '') for n in top_names)]
+    return filtered, cache.get('timestamp', 0)
 
 if __name__ == '__main__':
     import json
