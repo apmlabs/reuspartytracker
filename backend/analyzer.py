@@ -25,8 +25,21 @@ def analyze_image(image_path):
         return {"people": 0, "cars": 0, "police_cars": 0, "police_vans": 0, "police_uniformed": 0}
     
     prompt = f"""Look at this image: {image_path}
-Count and respond with ONLY a JSON object (no other text):
-{{"people": <number of people>, "cars": <number of cars/trucks/vans>, "police_cars": <police cars>, "police_vans": <police vans>, "police_uniformed": <uniformed police officers>}}"""
+
+This is Plaça Mercadal in Reus, Catalonia, Spain.
+
+POLICE VEHICLES TO IDENTIFY:
+1. Policía Local (Reus): Yellow body + blue upper section + white roof, OR white/blue cars
+2. Mossos d'Esquadra (Catalan police): Dark blue cars with red/burgundy stripe
+3. Guardia Civil: Dark green vehicles
+4. Policía Nacional: Blue and white vehicles
+
+Also look for: Blue flashing lights on any vehicle (especially at night), light bars on roof
+
+Do NOT count as police: Regular taxis, delivery vans, ambulances
+
+Count and respond with ONLY a JSON object:
+{{"people": <number>, "cars": <vehicles NOT police>, "police_cars": <police cars>, "police_vans": <police vans>, "police_uniformed": <officers>}}"""
     
     print(f"[DEBUG] Calling kiro-cli...", flush=True)
     
