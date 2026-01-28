@@ -187,3 +187,34 @@ yt-dlp --skip-download --write-thumbnail https://www.youtube.com/watch?v=L9HyLjR
 ```
 police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
 ```
+
+---
+
+## Session 5 - January 28, 2026 (afternoon)
+
+### Goals
+- [x] Fix AI overcounting people (47 vs ~20 actual)
+- [x] Split people counting: street vs terrace
+- [x] Unified chart with 5 metrics
+- [x] Time range selector (24h, 7d, 30d, 1y)
+- [x] Clickable legend to toggle lines
+- [x] Hide plazas with no busyness data
+
+### Implementation
+- **analyzer.py**: Updated prompt to count "street" and "terrace" separately, be conservative
+- **database.py**: Added street_count, terrace_count fields to save_party_data and get_party_history
+- **app.py**: Pass street/terrace counts through
+- **index.html**: 
+  - Unified chart with Total, Street, Terrace, Cars, Police lines
+  - Custom HTML legend (lines not boxes) with click-to-toggle
+  - Time range buttons: 24h, 7d, 30d, 1y
+  - Hide plazas if no restaurant has busyness > 0
+
+### People Count Fix
+Before: AI returned 47 people
+After: AI returns street=18, terrace=12, total=30 (more accurate)
+
+### Chart Changes
+- Removed separate Cars and Police charts
+- Single unified chart with 5 toggleable lines
+- Legend on left, time buttons on right (same row)
