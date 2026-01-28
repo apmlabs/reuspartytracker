@@ -2,261 +2,118 @@
 
 ## Session 1 - January 26, 2026
 
-### Goals
-- [x] Create project documentation (AGENTS.md, AMAZONQ.md, README.md)
-- [x] Create GitHub repository
-- [x] Set up basic project structure
-- [x] Screenshot capture working
+### Summary
+Initial project setup and core functionality.
 
-### Progress
+### Changes
+- Created project structure (AGENTS.md, README.md)
+- Set up GitHub repo: apmlabs/reuspartytracker
+- Implemented screenshot capture via Playwright + YouTube cookies
+- Built Flask API on port 5050
+- Created dark-themed frontend with YouTube embed
+- Integrated Outscraper API for restaurant Popular Times
+- Set up systemd service (reusparty.service)
 
-**20:38** - Project kickoff
-- User wants to build a party tracker for Plaça Mercadal in Reus
-- Inspired by pizzint.watch
-- Key features:
-  - YouTube live stream embed
-  - AI-powered crowd counting (screenshots every 5 min, configurable)
-  - Restaurant busyness from Google Maps
-  - Dark + light themes
-
-**Research completed:**
-- YouTube stream: https://www.youtube.com/watch?v=L9HyLjRVN8E
-- Backup webcam found: https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona/reus.html
-- Restaurants on Plaça Mercadal: Museu del Vermut, Casa Coder, La Presó, Vermuts Rofes, Bar L'Àmfora
-- Restaurants on Plaça del Teatre: Oplontina, As de Copas
-
-**Party level formula defined:**
-- 0-1 people = Level 0
-- 2-10 people = Level 2
-- 11-50 people = Level 7
-- 51-100 people = Level 8
-- 101-200+ people = Level 10
-
-### Decisions Made
-1. Tech stack: Python/Flask backend, vanilla HTML/CSS/JS frontend
-2. Host on current EC2 instance (careful of existing services)
-3. GitHub repo: apmlabs/reuspartytracker
-4. Screenshot interval: 5 min default, easily configurable
-
-**20:42** - GitHub repo created, docs pushed
-
-**20:45** - Tried yt-dlp but YouTube requires auth/cookies now
-
-**20:47** - Switched to headless Chromium approach
-
-**20:52** - Screenshot capture working!
-- Using `chromium-browser --headless --screenshot` directly
-- Selenium was hanging, direct CLI works
-- Captured 180KB PNG from YouTube stream
-- BUT: YouTube showed "sign in to confirm not a bot"
-
-**21:02** - Cookies approach
-- User exported cookies from Chrome using EditThisCookie extension
-- Uploaded youtube_cookies.json
-
-**21:07** - Playwright working!
-- Switched from Selenium to Playwright (better headless support)
-- Cookies loaded successfully
-- **Screenshot captured showing actual Plaça Mercadal!**
-- Night view, plaza nearly empty (~0 people)
-
-**21:08** - Flask app + Frontend working!
-- Flask API on port 5050
-- Basic dark-themed frontend with YouTube embed
-- Scheduler configured (default 5min, testing 1hr)
-- API endpoints: /api/party, /api/update, /api/refresh
-
-**21:44** - Cookie expiration issue
-- Screenshots started showing "Sign in to confirm you're not a bot"
-- YouTube cookies had expired/rotated
-- User exported fresh cookies, screenshot capture working again
-
-**21:58** - Systemd service created
-- `reusparty.service` installed and enabled
-- Auto-restarts on failure
-
-**22:01** - Frontend updated
-- Added restaurant section with two plazas
-- Added light/dark theme toggle (persists to localStorage)
-
-**22:12** - Outscraper integration
-- Integrated Outscraper API for restaurant Popular Times data
-- Added 15-minute caching to reduce API calls
-- API key stored in `.env` file (gitignored)
-
-### Current Status
-- ✅ Screenshot capture: WORKING (Playwright + cookies)
-- ✅ YouTube auth via cookies: WORKING (fresh cookies needed periodically)
-- ✅ Flask API: WORKING on port 5050
-- ✅ Systemd service: RUNNING (auto-restart enabled)
-- ✅ Frontend: WORKING (dark/light themes, restaurant section)
-- ✅ Restaurant data: WORKING (Outscraper API with caching)
-- 🔄 AI analysis: Manual via Kiro CLI for now
-- ⏳ OpenAI integration for auto crowd counting
-
-### Next Steps
-1. Integrate OpenAI GPT-4 Vision for automatic crowd counting
-2. Mobile responsive improvements
-3. Historical data tracking (optional)
+### Issues Resolved
+- YouTube requires auth - solved with exported cookies
+- Selenium hanging - switched to Playwright
 
 ---
 
-## Notes
+## Session 2 - January 27, 2026
 
-### Useful Commands
-```bash
-# Check what's running on ports
-sudo netstat -tlnp
+### Summary
+Added InfluxDB storage and historical charts.
 
-# Start Flask dev server
-cd backend && python app.py
-
-# Test yt-dlp screenshot
-yt-dlp --skip-download --write-thumbnail https://www.youtube.com/watch?v=L9HyLjRVN8E
-```
-
-### API Keys Needed
-- OpenAI API key (for GPT-4 Vision)
-- Google Maps API key (for Places API - restaurant data)
-
+### Changes
+- Integrated InfluxDB for time-series storage
+- Added party history charts (24h/7d)
+- Added restaurant busyness charts per plaza
+- Implemented daily backup script
 
 ---
 
-## Session 3 - January 28, 2026
+## Session 3 - January 28, 2026 (morning)
 
-### Goals
-- [x] Fix API cost issues - too many calls overnight
-- [x] Fix cache name mismatch bug
-- [x] Fix closed restaurants showing wrong busyness
+### Summary
+Fixed API cost issues from overnight calls.
 
-### Progress
-
-**08:35** - Investigated API calls from last 6 hours
-- Found 54 calls for Tacos La Mexicanita and Xivarri Gastronomía overnight
-- Both were closed but still being fetched
-
-**08:44** - Fixed cache name mismatch in `fetch_top_restaurants`
-- Same bug as plaza restaurants: query name "Tacos La Mexicanita" didn't match cache key "Tacos La Mexicanita Reus"
-- Added `find_cached()` substring matching function
-
-**08:40** - Fixed closed restaurants showing cached busyness
-- Closed restaurants were returning old busyness from cache instead of 0
-- Fixed in both API response and DB save logic
-- Now: closed = 0 busyness always
-
-**09:03** - Verified fix working
-- All closed restaurants now being skipped
-- Zero API calls for closed restaurants since fix
+### Changes
+- Fixed cache name mismatch bug (query name vs API-returned name)
+- Fixed closed restaurants showing cached busyness instead of 0
+- Added whitelist for restaurants with confirmed Popular Times data
+- Added 21:00 daily check for archived restaurants
 
 ### Bugs Fixed
-1. **Cache name mismatch** (fetch_top_restaurants) - query names don't match API-returned names
-2. **Closed restaurants busyness** - was showing cached value, now shows 0
-3. **DB save order** - was checking busyness before is_open, now checks is_open first
-
-### Current State
-- **Whitelist**: 11 restaurants (6 plaza + 5 top)
-- **API calls**: ~0-11 per 15-min refresh (only open + whitelist)
-- **21:00 check**: Fetches all archived to discover new Popular Times data
-- **Estimated daily cost**: ~$0.50-1.00 (down from $9+)
-
-### Top 5 Restaurants (by reviews, with busyness data)
-1. Restaurant del Museu del Vermut (4,300 reviews)
-2. Tacos La Mexicanita (2,197 reviews)
-3. Khirganga Restaurant (1,884 reviews)
-4. Xivarri Gastronomía (1,763 reviews)
-5. Ciutat Gaudí (1,623 reviews)
+1. Cache name mismatch in fetch_top_restaurants
+2. Closed restaurants returning old busyness
+3. DB save order (check is_open before busyness)
 
 ---
 
-## Session 4 - January 28, 2026 (continued)
+## Session 4 - January 28, 2026 (afternoon)
 
-### Goals
-- [x] Add Cars tracking (vehicle count)
-- [x] Add Police tracking (cars, vans, uniformed + score)
-- [x] Add 4 new charts (Cars 24h/7d, Police 24h/7d)
-- [x] Red header alert when police detected
-- [x] Save raw police data to DB
+### Summary
+Added vehicle and police tracking.
 
-### Implementation
-- **analyzer.py**: Updated AI prompt to return JSON with people, cars, police_cars, police_vans, police_uniformed
-- **database.py**: Added 5 new fields to party measurement (car_count, police_score, police_cars, police_vans, police_uniformed)
-- **app.py**: Process all fields, calculate police_score (cars×2 + vans×4 + uniformed×1)
-- **index.html**: Added Cars/Police to header, 4 new charts, red background on police detection
-
-### Police Score Formula
-```
-police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
-```
+### Changes
+- Added car_count to AI analysis
+- Added police detection (cars, vans, uniformed)
+- Added police_score formula: cars×2 + vans×4 + uniformed×1
+- Added 4 new charts (Cars 24h/7d, Police 24h/7d)
+- Added red header alert when police detected
+- Saved raw police data to InfluxDB
 
 ---
 
-## Session 5 - January 28, 2026 (afternoon)
+## Session 5 - January 28, 2026 (afternoon cont.)
 
-### Goals
-- [x] Fix AI overcounting people (47 vs ~20 actual)
-- [x] Split people counting: street vs terrace
-- [x] Unified chart with 5 metrics
-- [x] Time range selector (24h, 7d, 30d, 1y)
-- [x] Clickable legend to toggle lines
-- [x] Hide plazas with no busyness data
+### Summary
+Improved AI counting accuracy and unified charts.
 
-### Implementation
-- **analyzer.py**: Updated prompt to count "street" and "terrace" separately, be conservative
-- **database.py**: Added street_count, terrace_count fields to save_party_data and get_party_history
-- **app.py**: Pass street/terrace counts through
-- **index.html**: 
-  - Unified chart with Total, Street, Terrace, Cars, Police lines
-  - Custom HTML legend (lines not boxes) with click-to-toggle
-  - Time range buttons: 24h, 7d, 30d, 1y
-  - Hide plazas if no restaurant has busyness > 0
+### Changes
+- Split people counting: street vs terrace
+- Created unified chart with 5 metrics (Total, Street, Terrace, Cars, Police)
+- Added time range selector (24h, 7d, 30d, 1y)
+- Added clickable legend to toggle chart lines
+- Hide plazas with no busyness data
 
-### People Count Fix
-Before: AI returned 47 people
-After: AI returns street=18, terrace=12, total=30 (more accurate)
+### Bugs Fixed
+- AI overcounting people (47 vs ~20 actual) - updated prompt to be conservative
 
-### Chart Changes
-- Removed separate Cars and Police charts
-- Single unified chart with 5 toggleable lines
-- Legend on left, time buttons on right (same row)
+---
 
+## Session 6 - January 28, 2026 (evening)
 
-## Session 6 - January 28, 2026 (afternoon)
+### Summary
+Split AI analysis and improved police detection.
 
-### Goals
-- [x] Split AI analysis into two separate kiro-cli calls
-- [ ] Improve police detection prompt recall
+### Changes
+- Split analyzer.py into 2 kiro-cli calls (people/cars + police)
+- Created test_screenshots.md with 16 test images
+- Refined police detection prompt for Policía Local (yellow/blue/white)
 
-### Implementation
-- **analyzer.py**: Now makes 2 calls:
-  1. People/cars prompt (street, terrace, cars)
-  2. Police-only prompt (focused detection)
-- Removed `--agent party-tracker` flag, using default agent
+### Results
+- False positives: 0/6 (100% precision)
+- True positives: 4/10 (40% recall) - misses obscured/distant
 
-### Police Detection Testing
-Test file: `test_screenshots.md` with 10 police images, 6 no-police images
+---
 
-Current results:
-- **False positives**: 0/6 (100% precision) ✓
-- **True positives**: 4/10 (40% recall)
-- Detected: 091346, 093346, 094846 (clear view)
-- Missed: 100650, 102321, 103321, 104352 (obscured/distant)
+## Session 7 - January 28, 2026 (night)
 
-### Current Police Prompt
-```
-POLICE DETECTION ONLY - Ignore people and regular cars.
+### Summary
+Fixed is_open cache bug and major code refactor.
 
-### Policía Local (Reus) - MOST COMMON
-Small car (NOT a van) with THREE-TONE paint:
-- Bottom/lower body: BRIGHT YELLOW
-- Middle/upper doors: DARK BLUE  
-- Roof: WHITE
+### Changes
+- Fixed is_open not recalculating on cached data (all 6 return paths)
+- Refactored restaurants.py: unified fetch_restaurants() function
+- Refactored database.py: single 'restaurant' measurement with category tag
+- Migrated InfluxDB data (3752 top_restaurant + 3274 plaza records)
+- Merged cache files into single restaurants_cache.json
+- Fixed frontend "Top 25" → "Top 5"
+- Cleaned up documentation (AGENTS.md, AmazonQ.md, README.md)
 
-### Other Police Types
-- Mossos d'Esquadra: Dark blue car with RED stripe
-- Guardia Civil: Dark GREEN vehicles
-- Policía Nacional: Blue and white vehicles
-- Any vehicle with BLUE FLASHING LIGHTS
-
-### NOT Police
-- DHL/Correos: Large yellow VANS (solid yellow, no blue)
-```
+### Bugs Fixed
+- is_open returning stale cached value instead of recalculating
+- Duplicate code in fetch_all_restaurants/fetch_top_restaurants
+- Duplicate code in save_restaurant_data/save_top_restaurant_data

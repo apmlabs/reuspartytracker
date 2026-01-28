@@ -7,24 +7,29 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
-from analyzer import get_party_level, analyze_image, calc_police_score, calc_police_score
-from restaurants import fetch_all_restaurants, fetch_top_restaurants
-from database import save_party_data, save_restaurant_data, save_top_restaurant_data, get_party_history, get_restaurant_history, get_top_restaurant_history
+from analyzer import get_party_level, analyze_image, calc_police_score
+from restaurants import fetch_all_restaurants, fetch_top_restaurants, fetch_restaurants
+from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history, get_restaurant_history_by_name
 
 app = Flask(__name__, static_folder='../frontend')
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'party_data.json')
 SCREENSHOTS_DIR = os.path.join(os.path.dirname(__file__), '..', 'screenshots')
 
+
 def load_data():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE) as f:
             return json.load(f)
-    return {"people_count": 0, "party_level": 0, "car_count": 0, "police_count": 0, "police_score": 0, "police_cars": 0, "police_vans": 0, "police_uniformed": 0, "last_updated": None, "error": None}
+    return {"people_count": 0, "party_level": 0, "car_count": 0, "police_count": 0, 
+            "police_score": 0, "police_cars": 0, "police_vans": 0, "police_uniformed": 0, 
+            "last_updated": None, "error": None}
+
 
 def save_data(data):
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
     with open(DATA_FILE, 'w') as f:
         json.dump(data, f)
+
 
 def get_restaurant_busyness_avg():
     """Get average busyness of open Plaça Mercadal restaurants."""
@@ -36,16 +41,16 @@ def get_restaurant_busyness_avg():
     except:
         return None
 
+
 def get_combined_party_level(people_count):
     """Combine people count with restaurant busyness for final party level."""
     people_level = get_party_level(people_count)
     rest_avg = get_restaurant_busyness_avg()
     if rest_avg is None:
         return people_level
-    # Restaurant contribution: 100% busyness = level 5, scale linearly
-    rest_level = min(10, rest_avg / 20)  # 100% -> 5, 200% -> 10
-    # Average both signals
+    rest_level = min(10, rest_avg / 20)
     return round((people_level + rest_level) / 2)
+
 
 def update_party_data():
     """Capture screenshot and analyze with AI."""
@@ -53,6 +58,7 @@ def update_party_data():
     try:
         image_path = capture_youtube_frame(YOUTUBE_URL)
         analysis = analyze_image(image_path)
+        
         people_count = analysis["people"]
         street_count = analysis.get("street", 0)
         terrace_count = analysis.get("terrace", 0)
@@ -61,74 +67,92 @@ def update_party_data():
         police_vans = analysis["police_vans"]
         police_uniformed = analysis["police_uniformed"]
         police_score = calc_police_score(police_cars, police_vans, police_uniformed)
-        police_count = police_cars + police_vans + police_uniformed
         
-        data["last_screenshot"] = image_path
-        data["people_count"] = people_count
-        data["street_count"] = street_count
-        data["terrace_count"] = terrace_count
-        data["car_count"] = car_count
-        data["police_count"] = police_count
-        data["police_score"] = police_score
-        data["police_cars"] = police_cars
-        data["police_vans"] = police_vans
-        data["police_uniformed"] = police_uniformed
-        data["party_level"] = get_combined_party_level(people_count)
-        data["last_updated"] = datetime.now().isoformat()
-        data["error"] = None
-        save_party_data(people_count, data["party_level"], car_count, police_score, police_cars, police_vans, police_uniformed, street_count, terrace_count)
-        print(f"Screenshot: {image_path}, People: {people_count} (street: {street_count}, terrace: {terrace_count}), Cars: {car_count}, Police: {police_count} (score: {police_score}), Level: {data['party_level']}")
+        data.update({
+            "last_screenshot": image_path,
+            "people_count": people_count,
+            "street_count": street_count,
+            "terrace_count": terrace_count,
+            "car_count": car_count,
+            "police_count": police_cars + police_vans + police_uniformed,
+            "police_score": police_score,
+            "police_cars": police_cars,
+            "police_vans": police_vans,
+            "police_uniformed": police_uniformed,
+            "party_level": get_combined_party_level(people_count),
+            "last_updated": datetime.now().isoformat(),
+            "error": None
+        })
+        
+        save_party_data(people_count, data["party_level"], car_count, police_score,
+                       police_cars, police_vans, police_uniformed, street_count, terrace_count)
+        print(f"Screenshot: {image_path}, People: {people_count} (street: {street_count}, terrace: {terrace_count}), "
+              f"Cars: {car_count}, Police: {data['police_count']} (score: {police_score}), Level: {data['party_level']}")
     except Exception as e:
         data["error"] = str(e)
         data["last_updated"] = datetime.now().isoformat()
         print(f"Error: {e}")
     save_data(data)
 
+
+def refresh_restaurant_data():
+    """Background job to refresh all restaurant data."""
+    try:
+        # Fetch all categories (plazas + top), archived checked at 21:00 automatically
+        data, _ = fetch_restaurants(force_refresh=True)
+        save_restaurant_data(data)
+        print(f"[{datetime.now().isoformat()}] Restaurant data refreshed")
+    except Exception as e:
+        print(f"Error refreshing restaurant data: {e}")
+
+
 @app.route('/api/party')
 def get_party():
     return jsonify(load_data())
 
+
 @app.route('/api/restaurants')
 def get_restaurants():
-    """Return restaurant list with busyness from cache."""
+    """Return plaza restaurants with busyness."""
     data, timestamp = fetch_all_restaurants()
     return jsonify({"data": data, "last_updated": timestamp})
 
+
 @app.route('/api/top-restaurants')
 def get_top_restaurants():
-    """Return top 25 restaurants with busyness from cache."""
+    """Return top 5 restaurants with busyness."""
     data, timestamp = fetch_top_restaurants()
     return jsonify({"data": data, "last_updated": timestamp})
 
+
 @app.route('/api/history')
 def get_history():
-    """Return party history for charts."""
     hours = request.args.get('hours', 24, type=int)
     return jsonify(get_party_history(hours))
 
+
 @app.route('/api/history/restaurants')
 def get_rest_history():
-    """Return restaurant history for charts."""
     hours = request.args.get('hours', 24, type=int)
     return jsonify(get_restaurant_history(hours))
 
+
 @app.route('/api/history/top-restaurants')
 def get_top_rest_history():
-    """Return top restaurant history for charts."""
     hours = request.args.get('hours', 24, type=int)
-    return jsonify(get_top_restaurant_history(hours))
+    return jsonify(get_restaurant_history_by_name(hours, ['top']))
+
 
 @app.route('/api/screenshot')
 def get_screenshot():
-    """Serve the latest screenshot."""
     files = sorted(glob.glob(os.path.join(SCREENSHOTS_DIR, 'frame_*.png')))
     if files:
         return send_file(files[-1], mimetype='image/png')
     return '', 404
 
+
 @app.route('/api/update', methods=['POST'])
 def update_count():
-    """Manually update people count (called after Kiro analysis)."""
     data = load_data()
     count = request.json.get('people_count', 0)
     data['people_count'] = count
@@ -137,32 +161,23 @@ def update_count():
     save_data(data)
     return jsonify(data)
 
+
 @app.route('/api/refresh', methods=['POST'])
 def refresh():
     update_party_data()
     return jsonify(load_data())
 
-def refresh_restaurant_data():
-    """Background job to refresh restaurant data from Outscraper."""
-    try:
-        data, _ = fetch_all_restaurants(force_refresh=True)
-        save_restaurant_data(data)
-        top_data, _ = fetch_top_restaurants(force_refresh=True)
-        save_top_restaurant_data(top_data)
-        print(f"[{datetime.now().isoformat()}] Restaurant data refreshed")
-    except Exception as e:
-        print(f"Error refreshing restaurant data: {e}")
 
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
+
 
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_party_data, 'interval', seconds=SCREENSHOT_INTERVAL)
     scheduler.add_job(refresh_restaurant_data, 'interval', minutes=15)
     scheduler.start()
-    # Schedule first update in 5 seconds (don't block startup)
     scheduler.add_job(update_party_data, 'date', run_date=datetime.now().replace(microsecond=0).isoformat())
     print(f"Starting server on port {PORT}, screenshot interval: {SCREENSHOT_INTERVAL}s")
     app.run(host='0.0.0.0', port=PORT, debug=False)

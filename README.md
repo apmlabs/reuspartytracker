@@ -17,31 +17,15 @@ Watch the live stream, see how many people are partying, and check which restaur
 - 🍽️ Restaurant busyness levels from Google Maps
 - 🗺️ Interactive heatmap showing restaurant busyness
 - 🌙 Dark & light themes
-- 💾 InfluxDB time-series storage with daily backups
 
 ## Tracked Locations
 
-### Plaça del Teatre
-- Oplontina PizzaBar
-- As De Copes Gastropub
+### Plazas
+- **Plaça del Teatre**: Oplontina PizzaBar, As De Copes Gastropub
+- **Plaça Mercadal**: Casa Coder, Roslena Mercadal, Goofretti, El Mestral, Vivari, Maiki Poké, DITALY, Déu n'hi Do
+- **Plaça Evarist Fàbregas**: La Presó, Sibuya Urban Sushi Bar, Yokoso, Saona Reus
 
-### Plaça Mercadal
-- Casa Coder
-- Roslena Mercadal
-- Goofretti
-- El Mestral
-- Vivari
-- Maiki Poké
-- DITALY
-- Déu n'hi Do
-
-### Plaça Evarist Fàbregas
-- La Presó
-- Sibuya Urban Sushi Bar
-- Yokoso
-- Saona Reus
-
-### Top 5 Restaurants in Reus (by reviews, with busyness data)
+### Top 5 Restaurants (by reviews)
 1. Restaurant del Museu del Vermut (4,300 reviews)
 2. Tacos La Mexicanita (2,197 reviews)
 3. Khirganga Restaurant (1,884 reviews)
@@ -51,26 +35,69 @@ Watch the live stream, see how many people are partying, and check which restaur
 ## Tech Stack
 
 - **Backend**: Python, Flask, APScheduler
-- **Frontend**: HTML, CSS, JavaScript, Chart.js
+- **Frontend**: HTML, CSS, JavaScript, Chart.js, Leaflet
 - **AI**: Kiro CLI Vision
 - **Video**: Playwright for YouTube screenshots
 - **Database**: InfluxDB (time-series)
 - **Restaurant Data**: Outscraper API (Google Maps)
 
-## Quick Start
+## Setup
+
+### Prerequisites
+- Python 3.10+
+- InfluxDB 2.x
+- Kiro CLI installed
+
+### Installation
 
 ```bash
+# Clone repo
+git clone https://github.com/apmlabs/reuspartytracker.git
+cd reuspartytracker
+
+# Setup backend
 cd backend
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 
-# Set environment variables in .env
-OUTSCRAPER_API_KEY=your-key
-INFLUXDB_TOKEN=your-token
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys:
+#   OUTSCRAPER_API_KEY=your-key
+#   INFLUXDB_TOKEN=your-token
 
+# Setup InfluxDB
+influx bucket create -n party_data -o reusparty
+
+# Run
 python app.py
 ```
 
 Visit `http://localhost:5050`
+
+### Systemd Service (Production)
+
+```bash
+sudo cp reusparty.service /etc/systemd/system/
+sudo systemctl enable reusparty
+sudo systemctl start reusparty
+```
+
+## Troubleshooting
+
+### YouTube Screenshot Fails
+- Check if cookies expired: look for "bot prompt" in screenshot
+- Export fresh cookies from browser to `youtube_cookies.json`
+
+### Restaurant Data Missing
+- Check `logs/outscraper.log` for API errors
+- Verify API key in `.env`
+- Some restaurants don't have Google Popular Times data
+
+### InfluxDB Connection Issues
+- Verify InfluxDB is running: `systemctl status influxdb`
+- Check token in `.env` matches InfluxDB
 
 ## Data Sources
 
