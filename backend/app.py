@@ -54,6 +54,8 @@ def update_party_data():
         image_path = capture_youtube_frame(YOUTUBE_URL)
         analysis = analyze_image(image_path)
         people_count = analysis["people"]
+        street_count = analysis.get("street", 0)
+        terrace_count = analysis.get("terrace", 0)
         car_count = analysis["cars"]
         police_cars = analysis["police_cars"]
         police_vans = analysis["police_vans"]
@@ -63,6 +65,8 @@ def update_party_data():
         
         data["last_screenshot"] = image_path
         data["people_count"] = people_count
+        data["street_count"] = street_count
+        data["terrace_count"] = terrace_count
         data["car_count"] = car_count
         data["police_count"] = police_count
         data["police_score"] = police_score
@@ -72,8 +76,8 @@ def update_party_data():
         data["party_level"] = get_combined_party_level(people_count)
         data["last_updated"] = datetime.now().isoformat()
         data["error"] = None
-        save_party_data(people_count, data["party_level"], car_count, police_score, police_cars, police_vans, police_uniformed)
-        print(f"Screenshot: {image_path}, People: {people_count}, Cars: {car_count}, Police: {police_count} (score: {police_score}), Level: {data['party_level']}")
+        save_party_data(people_count, data["party_level"], car_count, police_score, police_cars, police_vans, police_uniformed, street_count, terrace_count)
+        print(f"Screenshot: {image_path}, People: {people_count} (street: {street_count}, terrace: {terrace_count}), Cars: {car_count}, Police: {police_count} (score: {police_score}), Level: {data['party_level']}")
     except Exception as e:
         data["error"] = str(e)
         data["last_updated"] = datetime.now().isoformat()

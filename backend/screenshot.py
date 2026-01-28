@@ -52,6 +52,17 @@ def capture_youtube_frame(url):
         except:
             pass
         
+        # Set quality to 720p
+        try:
+            page.click('button.ytp-settings-button', timeout=2000)
+            page.wait_for_timeout(500)
+            page.click('text=Quality', timeout=2000)
+            page.wait_for_timeout(500)
+            page.click('text=720p', timeout=2000)
+            page.wait_for_timeout(1000)
+        except:
+            pass
+        
         # Click fullscreen
         try:
             page.click('button.ytp-fullscreen-button', timeout=2000)

@@ -30,7 +30,13 @@
         .error { color: #ff6b6b; text-align: center; padding: 10px; }
         .people-charts { display: flex; flex-direction: column; gap: 10px; margin-bottom: 30px; }
         .people-charts .chart-box { flex: 1; background: var(--card); border-radius: 8px; padding: 15px; }
-        .chart-label { font-size: 0.8em; color: var(--muted); margin-bottom: 5px; }
+        .chart-label { font-size: 0.8em; color: var(--muted); margin-bottom: 5px; display: flex; justify-content: flex-end; align-items: center; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .chart-header .legend-item { display: inline-flex; align-items: center; margin-right: 12px; cursor: pointer; font-size: 0.85em; }
+        .chart-header .legend-item.hidden { opacity: 0.4; }
+        .chart-header .legend-line { width: 20px; height: 2px; margin-right: 5px; }
+        .time-btns button { padding: 2px 8px; margin-left: 4px; border: 1px solid var(--muted); background: var(--bg); color: var(--fg); border-radius: 4px; cursor: pointer; font-size: 0.9em; }
+        .time-btns button.active { background: var(--accent); color: #fff; border-color: var(--accent); }
         .plaza-row { display: flex; gap: 20px; margin-bottom: 20px; background: var(--card); border-radius: 8px; padding: 15px; }
         .plaza-info { flex: 0 0 20%; }
         .plaza-charts { flex: 0 0 78%; display: flex; flex-direction: column; gap: 10px; }
@@ -82,29 +88,17 @@
         <div class="error" id="error"></div>
         
         <div class="people-charts">
-            <div class="chart-box">
-                <div class="chart-label">People - Last 24 Hours</div>
-                <canvas id="party-daily" height="80"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-label">People - Last 7 Days</div>
-                <canvas id="party-weekly" height="80"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-label">Cars - Last 24 Hours</div>
-                <canvas id="cars-daily" height="80"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-label">Cars - Last 7 Days</div>
-                <canvas id="cars-weekly" height="80"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-label">Police Score - Last 24 Hours</div>
-                <canvas id="police-daily" height="80"></canvas>
-            </div>
-            <div class="chart-box">
-                <div class="chart-label">Police Score - Last 7 Days</div>
-                <canvas id="police-weekly" height="80"></canvas>
+            <div class="chart-box" style="grid-column: span 2;">
+                <div class="chart-header">
+                    <span id="chart-legend"></span>
+                    <span class="time-btns">
+                        <button onclick="loadPeopleChart(24)" id="ppl-24h">24h</button>
+                        <button onclick="loadPeopleChart(168)" id="ppl-7d">7d</button>
+                        <button onclick="loadPeopleChart(720)" id="ppl-30d">30d</button>
+                        <button onclick="loadPeopleChart(8760)" id="ppl-1y">1y</button>
+                    </span>
+                </div>
+                <canvas id="party-chart" height="80"></canvas>
             </div>
         </div>
         
@@ -138,11 +132,39 @@
 
         function makeChart(id, labels, values, color) {
             if (charts[id]) charts[id].destroy();
-            charts[id] = new Chart(document.getElementById(id), {
+            const el = document.getElementById(id);
+            if (!el) return;
+            charts[id] = new Chart(el, {
                 type: 'line',
                 data: {labels, datasets: [{data: values, borderColor: color, backgroundColor: color + '22', fill: true, tension: 0.3, pointRadius: 1}]},
                 options: chartOpts
             });
+        }
+        function makeMultiChart(id, labels, datasets) {
+            if (charts[id]) charts[id].destroy();
+            const el = document.getElementById(id);
+            if (!el) return;
+            charts[id] = new Chart(el, {
+                type: 'line',
+                data: {labels, datasets: datasets.map(d => ({label: d.label, data: d.values, borderColor: d.color, backgroundColor: 'transparent', fill: false, tension: 0.3, pointRadius: 1}))},
+                options: {...chartOpts, plugins: {legend: {display: false}}}
+            });
+            // Custom legend
+            const legendEl = document.getElementById('chart-legend');
+            if (legendEl) {
+                legendEl.innerHTML = datasets.map((d, i) => 
+                    `<span class="legend-item" data-idx="${i}"><span class="legend-line" style="background:${d.color}"></span>${d.label}</span>`
+                ).join('');
+                legendEl.querySelectorAll('.legend-item').forEach(item => {
+                    item.onclick = () => {
+                        const idx = +item.dataset.idx;
+                        const meta = charts[id].getDatasetMeta(idx);
+                        meta.hidden = !meta.hidden;
+                        item.classList.toggle('hidden');
+                        charts[id].update();
+                    };
+                });
+            }
         }
 
         async function fetchData() {
@@ -170,6 +192,8 @@
                 let html = '';
                 for (const plaza of plazaOrder) {
                     const restaurants = data[plaza] || [];
+                    // Hide plaza if no restaurant has busyness > 0
+                    if (!restaurants.some(r => r.busyness > 0)) continue;
                     const name = plaza.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     html += `<div class="plaza-row">
                         <div class="plaza-info"><div class="plaza"><h3>📍 ${name}</h3>`;
@@ -196,22 +220,39 @@
             } catch (e) {}
         }
 
+        function getTimeFmt(hours) {
+            return hours <= 24 ? d => new Date(d).toLocaleTimeString('en', {hour: '2-digit'}) 
+                 : hours <= 168 ? d => new Date(d).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})
+                 : d => new Date(d).toLocaleDateString('en', {month: 'short', day: 'numeric'});
+        }
+        function setActiveBtn(prefix, hours) {
+            document.querySelectorAll(`#${prefix}-24h,#${prefix}-7d,#${prefix}-30d,#${prefix}-1y`).forEach(b => b.classList.remove('active'));
+            document.getElementById(`${prefix}-${hours === 24 ? '24h' : hours === 168 ? '7d' : hours === 720 ? '30d' : '1y'}`).classList.add('active');
+        }
+
+        async function loadPeopleChart(hours) {
+            setActiveBtn('ppl', hours);
+            const data = await fetch(`/api/history?hours=${hours}`).then(r => r.json());
+            const fmt = getTimeFmt(hours);
+            makeMultiChart('party-chart', data.map(d => fmt(d.timestamp)), [
+                {label: 'Total', values: data.map(d => d.people_count), color: '#ff6b6b'},
+                {label: 'Street', values: data.map(d => d.street_count || 0), color: '#3498db'},
+                {label: 'Terrace', values: data.map(d => d.terrace_count || 0), color: '#2ecc71'},
+                {label: 'Cars', values: data.map(d => d.car_count || 0), color: '#9b59b6'},
+                {label: 'Police', values: data.map(d => d.police_score || 0), color: '#e74c3c'}
+            ]);
+        }
+
         async function fetchHistory() {
             try {
-                const [daily, weekly, restDaily, restWeekly] = await Promise.all([
-                    fetch('/api/history?hours=24').then(r => r.json()),
-                    fetch('/api/history?hours=168').then(r => r.json()),
+                const [restDaily, restWeekly] = await Promise.all([
                     fetch('/api/history/restaurants?hours=24').then(r => r.json()),
                     fetch('/api/history/restaurants?hours=168').then(r => r.json())
                 ]);
-                makeChart('party-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.people_count), '#ff6b6b');
-                makeChart('party-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.people_count), '#ff6b6b');
-                makeChart('cars-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.car_count || 0), '#3498db');
-                makeChart('cars-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.car_count || 0), '#3498db');
-                makeChart('police-daily', daily.map(d => new Date(d.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), daily.map(d => d.police_score || 0), '#e74c3c');
-                makeChart('police-weekly', weekly.map(d => new Date(d.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), weekly.map(d => d.police_score || 0), '#e74c3c');
+                loadPeopleChart(24);
                 for (const plaza of plazaOrder) {
                     const d = restDaily[plaza] || [], w = restWeekly[plaza] || [], color = plazaColors[plaza];
+                    if (!d.some(x => x.busyness > 0) && !w.some(x => x.busyness > 0)) continue;
                     makeChart(`${plaza}-daily`, d.map(x => new Date(x.timestamp).toLocaleTimeString('en', {hour: '2-digit'})), d.map(x => x.busyness), color);
                     makeChart(`${plaza}-weekly`, w.map(x => new Date(x.timestamp).toLocaleDateString('en', {weekday: 'short', hour: '2-digit'})), w.map(x => x.busyness), color);
                 }
