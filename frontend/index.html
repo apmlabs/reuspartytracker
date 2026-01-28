@@ -146,14 +146,14 @@
             if (!el) return;
             charts[id] = new Chart(el, {
                 type: 'line',
-                data: {labels, datasets: datasets.map(d => ({label: d.label, data: d.values, borderColor: d.color, backgroundColor: 'transparent', fill: false, tension: 0.3, pointRadius: 1}))},
+                data: {labels, datasets: datasets.map(d => ({label: d.label, data: d.values, borderColor: d.color, backgroundColor: 'transparent', fill: false, tension: 0.3, pointRadius: 1, hidden: d.hidden || false}))},
                 options: {...chartOpts, plugins: {legend: {display: false}}}
             });
             // Custom legend
             const legendEl = document.getElementById('chart-legend');
             if (legendEl) {
                 legendEl.innerHTML = datasets.map((d, i) => 
-                    `<span class="legend-item" data-idx="${i}"><span class="legend-line" style="background:${d.color}"></span>${d.label}</span>`
+                    `<span class="legend-item${d.hidden ? ' hidden' : ''}" data-idx="${i}"><span class="legend-line" style="background:${d.color}"></span>${d.label}</span>`
                 ).join('');
                 legendEl.querySelectorAll('.legend-item').forEach(item => {
                     item.onclick = () => {
@@ -235,9 +235,9 @@
             const data = await fetch(`/api/history?hours=${hours}`).then(r => r.json());
             const fmt = getTimeFmt(hours);
             makeMultiChart('party-chart', data.map(d => fmt(d.timestamp)), [
-                {label: 'Total', values: data.map(d => d.people_count), color: '#ff6b6b'},
-                {label: 'Street', values: data.map(d => d.street_count || 0), color: '#3498db'},
-                {label: 'Terrace', values: data.map(d => d.terrace_count || 0), color: '#2ecc71'},
+                {label: 'Total', values: data.map(d => d.people_count), color: '#2ecc71'},
+                {label: 'Street', values: data.map(d => d.street_count || 0), color: '#3498db', hidden: true},
+                {label: 'Terrace', values: data.map(d => d.terrace_count || 0), color: '#f1c40f', hidden: true},
                 {label: 'Cars', values: data.map(d => d.car_count || 0), color: '#9b59b6'},
                 {label: 'Police', values: data.map(d => d.police_score || 0), color: '#e74c3c'}
             ]);

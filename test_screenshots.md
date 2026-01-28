@@ -14,3 +14,6 @@
 - frame_20260127_181127.png - No police
 - frame_20260127_223010.png - No police
 - frame_20260128_105556.png - No police, 720p quality
+- frame_20260128_132639.png - No police (false positive test - AI mis-detected)
+- frame_20260128_133649.png - No police (false positive - AI detected police_score=2)
+- frame_20260128_133751.png - No police (false positive - AI detected police_score=4)
