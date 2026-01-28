@@ -15,6 +15,8 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 **GitHub**: apmlabs/reuspartytracker
 
 ### Recent Updates (Jan 28, 2026)
+- ✅ Split AI analysis into two calls: people/cars + police detection
+- ✅ Police detection prompt optimized for zero false positives
 - ✅ Split people counting: street vs terrace (restaurant patrons)
 - ✅ Unified chart with 5 metrics: Total, Street, Terrace, Cars, Police
 - ✅ Time range selector: 24h, 7d, 30d, 1y
@@ -53,9 +55,9 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 │  │     └─► Playwright loads YouTube with cookies                       │   │
 │  │     └─► Captures frame → screenshots/latest.png                     │   │
 │  │                                                                     │   │
-│  │  2. AI ANALYSIS (analyzer.py)                                       │   │
-│  │     └─► Kiro CLI vision analyzes screenshot                         │   │
-│  │     └─► Returns: people_count, car_count, police breakdown          │   │
+│  │  2. AI ANALYSIS (analyzer.py) - TWO SEPARATE CALLS                  │   │
+│  │     └─► Call 1: People counting (street + terrace) + car count      │   │
+│  │     └─► Call 2: Police detection only (focused prompt)              │   │
 │  │     └─► Calculates police_score: cars×2 + vans×4 + uniformed×1      │   │
 │  │                                                                     │   │
 │  └─────────────────────────────────────────────────────────────────────┘   │
