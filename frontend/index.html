@@ -158,8 +158,8 @@
                 legendEl.querySelectorAll('.legend-item').forEach(item => {
                     item.onclick = () => {
                         const idx = +item.dataset.idx;
-                        const meta = charts[id].getDatasetMeta(idx);
-                        meta.hidden = !meta.hidden;
+                        const ds = charts[id].data.datasets[idx];
+                        ds.hidden = !ds.hidden;
                         item.classList.toggle('hidden');
                         charts[id].update();
                     };
