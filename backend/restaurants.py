@@ -285,8 +285,16 @@ def fetch_all_restaurants(force_refresh=False):
             json.dump({"timestamp": ts, "data": result}, f)
         return result, ts
     
-    # Return old cache if refresh failed
-    return cache.get('data', {}), cache.get('timestamp', 0)
+    # Return old cache if refresh failed (recalculate is_open)
+    fallback = cache.get('data', {})
+    for plaza, items in fallback.items():
+        for r in items:
+            is_open, hours_known = is_open_now(r.get('working_hours'))
+            r['is_open'] = is_open
+            r['hours_known'] = hours_known
+            if not is_open:
+                r['busyness'] = 0
+    return fallback, cache.get('timestamp', 0)
 
 def fetch_top_restaurants(force_refresh=False):
     """Return cached data immediately with timestamp. Refresh only if forced."""
@@ -375,8 +383,15 @@ def fetch_top_restaurants(force_refresh=False):
         filtered = [r for r in result if any(n in r.get('name', '') for n in top_names)]
         return filtered, ts
     
-    # Return old cache if refresh failed
-    filtered = [r for r in cached_data if any(n in r.get('name', '') for n in top_names)]
+    # Return old cache if refresh failed (recalculate is_open)
+    filtered = []
+    for r in cached_data:
+        if any(n in r.get('name', '') for n in top_names):
+            is_open, hours_known = is_open_now(r.get('working_hours'))
+            r = {**r, 'is_open': is_open, 'hours_known': hours_known}
+            if not is_open:
+                r = {**r, 'busyness': 0}
+            filtered.append(r)
     return filtered, cache.get('timestamp', 0)
 
 if __name__ == '__main__':
