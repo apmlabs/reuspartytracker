@@ -35,15 +35,14 @@ Count people in TWO categories:
 - Do NOT count people inside buildings or partially hidden
 - Be CONSERVATIVE - if unsure, don't count it
 
-## POLICE DETECTION (CRITICAL)
+## POLICE DETECTION
 
 ### Policía Local (Reus) - MOST COMMON
-Small car with THREE-TONE paint:
+Small car (NOT a van) with THREE-TONE paint:
 - Bottom/lower body: BRIGHT YELLOW
 - Middle/upper doors: DARK BLUE  
 - Roof: WHITE
-- Size: Regular car (sedan/hatchback), NOT a van
-- Key identifier: YELLOW + DARK BLUE combination on a small car
+Look for this yellow+blue combination on car-sized vehicles.
 
 ### Other Police Types
 - Mossos d'Esquadra: Dark blue car with RED stripe
@@ -51,22 +50,8 @@ Small car with THREE-TONE paint:
 - Policía Nacional: Blue and white vehicles
 - Any vehicle with BLUE FLASHING LIGHTS (especially at night)
 
-### FALSE POSITIVES - NOT POLICE
-- DHL van: LARGE yellow van with "DHL" red text. Solid yellow, NO dark blue. Much bigger than a car.
-- Correos van: Yellow postal van with branding
-- Any vehicle with company logos
-
-### KEY DIFFERENCES
-- Police: YELLOW + DARK BLUE + WHITE, small CAR size, no branding
-- DHL: Solid YELLOW only (no dark blue), large VAN size, has "DHL" text
-
-### VERIFICATION
-For each yellow vehicle:
-1. CAR-sized or VAN-sized?
-2. Has DARK BLUE on upper section?
-3. Has company branding?
-→ CAR + dark blue + no branding = POLICE
-→ VAN or no dark blue or branding = NOT POLICE
+### NOT Police
+- DHL/Correos: Large yellow VANS with company logos (solid yellow, no blue)
 
 Return ONLY JSON: {{"street": N, "terrace": N, "cars": N, "police_cars": N, "police_vans": N, "police_uniformed": N}}"""
     
