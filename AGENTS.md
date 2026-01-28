@@ -1,375 +1,145 @@
 # Reus Party Tracker - Agent Context
 
-## 🎯 PROJECT GOAL
+## Project Goal
 
-**Real-time party activity tracker for Plaça Mercadal in Reus, Spain** - monitors crowd levels via YouTube live stream AI analysis and displays restaurant busyness from Google Maps data.
+Real-time party activity tracker for Plaça Mercadal in Reus, Spain. Monitors crowd levels via YouTube live stream AI analysis and displays restaurant busyness from Google Maps data.
 
-Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
+Inspired by https://www.pizzint.watch/
 
----
+## Architecture
 
-## 📋 PROJECT STATUS
-
-**Phase**: Phase 6 - Polish (in progress)
-**Started**: January 26, 2026
-**GitHub**: apmlabs/reuspartytracker
-
-### Recent Updates (Jan 28, 2026)
-- ✅ Split AI analysis into two calls: people/cars + police detection
-- ✅ Police detection prompt optimized for zero false positives
-- ✅ Split people counting: street vs terrace (restaurant patrons)
-- ✅ Unified chart with 5 metrics: Total, Street, Terrace, Cars, Police
-- ✅ Time range selector: 24h, 7d, 30d, 1y
-- ✅ Clickable legend to toggle lines on/off
-- ✅ Hide plazas with no busyness data (e.g., Plaça del Teatre)
-- ✅ Added Cars tracking (vehicle count in plaza)
-- ✅ Added Police tracking with scoring: cars×2 + vans×4 + uniformed×1
-- ✅ Red header alert when police detected
-- ✅ Raw police data saved to DB (police_cars, police_vans, police_uniformed)
-- ✅ Fixed cache name mismatch bug (query vs API names)
-- ✅ Closed restaurants now return/save busyness=0
-- ✅ Daily InfluxDB backup (3am, keeps 7 days)
-
-### Previous Updates (Jan 27, 2026)
-- ✅ Fixed restaurant open/closed status using Spain timezone
-- ✅ Non-blocking API: returns cached data instantly, background refresh every 15 min
-- ✅ Smart API optimization: skip closed restaurants, limit calls for no-busyness restaurants
-- ✅ API call logging to `logs/outscraper.log` for cost monitoring
-- ✅ Frontend shows "last updated" timestamp for restaurant data
-
----
-
-## 🏗️ ARCHITECTURE
-
-### Complete Data Flow
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              SCHEDULED TASKS                                 │
-│                         (APScheduler in app.py)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Every 5 minutes: update_party_data()                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                                                                     │   │
-│  │  1. SCREENSHOT CAPTURE (screenshot.py)                              │   │
-│  │     └─► Playwright loads YouTube with cookies                       │   │
-│  │     └─► Captures frame → screenshots/latest.png                     │   │
-│  │                                                                     │   │
-│  │  2. AI ANALYSIS (analyzer.py) - TWO SEPARATE CALLS                  │   │
-│  │     └─► Call 1: People counting (street + terrace) + car count      │   │
-│  │     └─► Call 2: Police detection only (focused prompt)              │   │
-│  │     └─► Calculates police_score: cars×2 + vans×4 + uniformed×1      │   │
-│  │                                                                     │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-│  Every 15 minutes: refresh_restaurant_data()                                │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  SMART FETCHING (restaurants.py)                                    │   │
-│  │  └─► Skip closed restaurants (known hours) → save 0 to DB           │   │
-│  │  └─► Skip no-busyness restaurants (except 21:00 daily check)        │   │
-│  │  └─► Skip unknown-hours restaurants outside 9am-11pm                │   │
-│  │  └─► Fetch only open restaurants in whitelist                       │   │
-│  │  └─► Substring matching for cache lookup (query vs API names)       │   │
-│  │  └─► Save to cache + InfluxDB                                       │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-│  API ENDPOINTS (always return cached data instantly)                        │
-│  └─► /api/restaurants - plaza restaurants with timestamp                    │
-│  └─► /api/top-restaurants - top 5 restaurants with timestamp                │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     SCHEDULED TASKS (APScheduler)               │
+├─────────────────────────────────────────────────────────────────┤
+│ Every 5 min: update_party_data()                                │
+│   1. Playwright captures YouTube screenshot                     │
+│   2. Kiro CLI analyzes image (2 calls: people/cars + police)    │
+│   3. Saves to InfluxDB + party_data.json                        │
+│                                                                 │
+│ Every 15 min: refresh_restaurant_data()                         │
+│   - Fetches from Outscraper API (smart: skips closed)           │
+│   - Saves to InfluxDB + restaurants_cache.json                  │
+└─────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              FLASK API (app.py)                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  GET /api/party          → Current party data (people, level, timestamp)   │
-│  GET /api/restaurants    → Current restaurant busyness by plaza            │
-│  GET /api/top-restaurants → Top 5 restaurants with busyness/rating/reviews │
-│  GET /api/screenshot     → Latest screenshot image                         │
-│  GET /api/history?hours=N        → Party history from InfluxDB             │
-│  GET /api/history/restaurants?hours=N → Restaurant avg history by plaza    │
-│  GET /api/history/top-restaurants?hours=N → Top restaurant history         │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     FLASK API (port 5050)                       │
+├─────────────────────────────────────────────────────────────────┤
+│ GET /api/party              → Current party data                │
+│ GET /api/restaurants        → Plaza restaurants                 │
+│ GET /api/top-restaurants    → Top 5 restaurants                 │
+│ GET /api/screenshot         → Latest screenshot                 │
+│ GET /api/history?hours=N    → Party history                     │
+│ GET /api/history/restaurants?hours=N → Plaza avg history        │
+│ GET /api/history/top-restaurants?hours=N → Top restaurant hist  │
+└─────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              FRONTEND (index.html)                          │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  Auto-refresh intervals:                                                    │
-│  • Screenshot image: 30 seconds                                             │
-│  • Party data: 60 seconds                                                   │
-│  • Restaurant data + charts: 15 minutes                                     │
-│                                                                             │
-│  Layout:                                                                    │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │ Header: Title | Party Level | People Count | Cars | Police | Theme  │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Screenshot from YouTube live stream                                 │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Unified Chart: 5 lines (Total, Street, Terrace, Cars, Police)       │   │
-│  │   - Time range buttons: 24h, 7d, 30d, 1y                            │   │
-│  │   - Clickable legend to toggle lines                                │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Plaza Mercadal:    Restaurants (20%) | Charts 24h/7d (80%)          │   │
-│  │ Plaza Evarist:     Restaurants (20%) | Charts 24h/7d (80%)          │   │
-│  │ (Plazas hidden if no busyness data > 0)                             │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Restaurant Heatmap: Leaflet map with color-coded markers            │   │
-│  │   Blue = low busyness, Red = high busyness, Grey = closed/no data   │   │
-│  ├─────────────────────────────────────────────────────────────────────┤   │
-│  │ Top 5 Restaurants: Each with name, reviews, rating, 24h/7d charts   │   │
-│  │   (highest-reviewed restaurants with Popular Times data)            │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                     FRONTEND (index.html)                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Header: Party Level | People | Cars | Police | Theme Toggle     │
+│ Screenshot from YouTube live stream                             │
+│ Unified Chart: Total, Street, Terrace, Cars, Police (24h-1y)    │
+│ Plaza sections: Restaurant list + 24h/7d charts                 │
+│ Restaurant Heatmap (Leaflet)                                    │
+│ Top 5 Restaurants with individual charts                        │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Restaurant Busyness Rules (for charts)
-```
-Restaurant State          │ Saved to DB │ Color in UI │ Effect on Average
-──────────────────────────┼─────────────┼─────────────┼───────────────────
-Open + has busyness %     │ actual %    │ Green       │ Included
-Closed                    │ 0           │ Red         │ Included (as 0)
-Open + no data from Google│ NOT saved   │ Grey        │ Excluded
+## File Structure
 
-Note: If Google doesn't provide working hours, we assume 9am-11pm and show "?" next to status.
+```
+reuspartytracker/
+├── AGENTS.md                 # Architecture & config (this file)
+├── AmazonQ.md                # Session progress log
+├── README.md                 # User documentation
+├── backend/
+│   ├── app.py                # Flask server + scheduler
+│   ├── analyzer.py           # Kiro CLI vision analysis
+│   ├── screenshot.py         # Playwright YouTube capture
+│   ├── restaurants.py        # Outscraper API + caching (unified)
+│   ├── database.py           # InfluxDB operations (unified)
+│   ├── config.py             # Intervals, thresholds, URLs
+│   ├── requirements.txt
+│   └── .env                  # API keys (gitignored)
+├── frontend/
+│   └── index.html            # Single-page app
+├── data/
+│   ├── party_data.json       # Current state cache
+│   └── restaurants_cache.json # All restaurants cache (unified)
+├── screenshots/              # Captured frames (gitignored)
+└── logs/
+    └── outscraper.log        # API call log
 ```
 
-### InfluxDB Schema
+## Configuration
+
+### Timing
+| Component | Interval | Location |
+|-----------|----------|----------|
+| Screenshot capture | 5 min | config.py SCREENSHOT_INTERVAL |
+| Restaurant refresh | 15 min | app.py scheduler |
+| Frontend screenshot | 30 sec | index.html |
+| Frontend party data | 60 sec | index.html |
+| Frontend restaurants | 15 min | index.html |
+
+### Party Level Formula
+```
+People: 0→L0, 1-2→L1, 3-5→L2, 6-10→L3, 11-20→L4, 21-50→L5, 51-70→L7, 71-100→L9, 100+→L10
+Restaurant: 100% busyness = L5 (linear scale)
+Final = (People Level + Restaurant Level) / 2
+```
+
+### Police Score
+```
+police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
+```
+
+### Restaurant Busyness Rules
+| State | Saved to DB | Chart Effect |
+|-------|-------------|--------------|
+| Closed | 0 | Included as 0 |
+| Open + busyness | actual % | Included |
+| Open + no data | NOT saved | Excluded |
+
+## Data Sources
+
+### YouTube Live Stream
+- Primary: https://www.youtube.com/watch?v=L9HyLjRVN8E (Plaça Mercadal)
+- Requires cookies (youtube_cookies.json) - refresh when expired
+
+### Restaurants
+**Plaza Mercadal**: Casa Coder, Roslena Mercadal, Goofretti, El Mestral, Vivari, Maiki Poké, DITALY, Déu n'hi Do
+
+**Plaza Evarist Fàbregas**: La Presó, Sibuya Urban Sushi Bar, Yokoso, Saona Reus
+
+**Plaza del Teatre**: Oplontina, As de Copas
+
+**Top 5** (by reviews, with Popular Times): Restaurant del Museu del Vermut, Tacos La Mexicanita, Khirganga Restaurant, Xivarri Gastronomía, Ciutat Gaudí
+
+## InfluxDB Schema
+
 ```
 Bucket: party_data (infinite retention)
 
 Measurement: party
-  Fields: people_count (int), street_count (int), terrace_count (int), party_level (int), car_count (int), police_score (int), police_cars (int), police_vans (int), police_uniformed (int)
-  
-Measurement: restaurant  
-  Tags: name (string), plaza (string)
-  Fields: busyness (int)
-  
-Query for charts: aggregateWindow(every: 5m, fn: mean) grouped by plaza
+  Fields: people_count, street_count, terrace_count, party_level, 
+          car_count, police_score, police_cars, police_vans, police_uniformed
+
+Measurement: restaurant
+  Tags: name, category (placa_mercadal|placa_evarist_fabregas|placa_del_teatre|top)
+  Fields: busyness
 ```
 
-### File Structure (Actual)
-```
-reuspartytracker/
-├── AGENTS.md                    # This file - architecture & context
-├── README.md                    # User documentation
-├── .gitignore
-├── youtube_cookies.json         # YouTube auth (gitignored)
-│
-├── backend/
-│   ├── app.py                   # Flask server + scheduler
-│   ├── analyzer.py              # Kiro CLI vision analysis
-│   ├── screenshot.py            # Playwright YouTube capture
-│   ├── restaurants.py           # Outscraper API + caching
-│   ├── database.py              # InfluxDB read/write
-│   ├── config.py                # Intervals, thresholds, URLs
-│   ├── requirements.txt
-│   ├── .env                     # API keys (gitignored)
-│   └── venv/                    # Python virtual environment
-│
-├── frontend/
-│   └── index.html               # Single-page app (HTML+CSS+JS)
-│
-├── data/
-│   ├── party_data.json          # Current state cache
-│   └── restaurants_cache.json   # Restaurant API cache (gitignored)
-│
-└── screenshots/
-    └── latest.png               # Most recent capture (gitignored)
-```
+## Deployment
 
-### Party Level Formula
-```
-People Count → Base Level (0-10)
-─────────────────────────────────
-0 people     → Level 0
-1-2 people   → Level 1
-3-5 people   → Level 2
-6-10 people  → Level 3
-11-20 people → Level 4
-21-50 people → Level 5
-51-70 people → Level 7
-71-100 people → Level 9
-100+ people  → Level 10
+- Host: 54.80.204.92 (AWS EC2)
+- Port: 5050
+- Service: `sudo systemctl restart reusparty`
+- Daily backup: 3am, keeps 7 days
 
-Combined Formula:
-─────────────────
-Restaurant Avg Busyness: 100% = Level 5 (scales linearly)
-Final Party Level = (People Level + Restaurant Level) / 2
-```
+## Known Issues
 
-### Timing & Intervals
-```
-Component                │ Interval    │ Source
-─────────────────────────┼─────────────┼─────────────────────────
-Screenshot capture       │ 5 min       │ config.py SCREENSHOT_INTERVAL
-AI analysis              │ 5 min       │ (with screenshot)
-Restaurant API call      │ 15 min      │ restaurants.py CACHE_TTL
-Save to InfluxDB         │ 5 min       │ (with screenshot)
-Frontend screenshot      │ 30 sec      │ index.html setInterval
-Frontend party data      │ 60 sec      │ index.html setInterval
-Frontend restaurants     │ 15 min      │ index.html setInterval
-Chart aggregation window │ 5 min       │ database.py InfluxDB query
-```
-
-### Tech Stack
-- **Frontend**: HTML5, CSS3, JavaScript (vanilla)
-- **Backend**: Python 3, Flask
-- **AI**: Kiro CLI (vision analysis via subprocess)
-- **Video**: yt-dlp + ffmpeg for YouTube screenshots
-- **Scheduling**: APScheduler
-- **Hosting**: This AWS EC2 instance
-
----
-
-## 📁 FILE STRUCTURE (Planned)
-
-```
-reuspartytracker/
-├── AGENTS.md              # This file - agent context
-├── AMAZONQ.md             # Session history
-├── README.md              # User documentation
-├── .gitignore
-│
-├── backend/
-│   ├── app.py             # Flask server
-│   ├── analyzer.py        # AI vision analysis
-│   ├── screenshot.py      # YouTube screenshot capture
-│   ├── restaurants.py     # Google Maps data scraper
-│   ├── scheduler.py       # Scheduled tasks
-│   ├── config.py          # Configuration (intervals, thresholds)
-│   └── requirements.txt
-│
-├── frontend/
-│   ├── index.html         # Main page
-│   ├── style.css          # Styling (dark + light themes)
-│   └── script.js          # Frontend logic
-│
-├── data/
-│   └── party_data.json    # Current state
-│
-└── screenshots/           # Captured frames (gitignored)
-```
-
----
-
-## 📍 DATA SOURCES
-
-### YouTube Live Stream
-- **Primary**: https://www.youtube.com/watch?v=L9HyLjRVN8E (Plaça Mercadal)
-- **Backup**: https://www.skylinewebcams.com/webcam/espana/cataluna/tarragona/reus.html
-
-### Restaurants - Plaça Mercadal
-- Casa Coder
-- Roslena Mercadal
-- Goofretti
-- El Mestral
-- Vivari
-- Maiki Poké
-- DITALY
-- Déu n'hi Do
-
-### Restaurants - Plaça Evarist Fàbregas
-- La Presó
-- Sibuya Urban Sushi Bar
-- Yokoso
-- Saona Reus
-
-### Restaurants - Plaça del Teatre
-- Oplontina
-- As de Copas
-
----
-
-## 🚀 DEPLOYMENT
-
-### Current Server
-- **Host**: 54.80.204.92 (AWS EC2)
-- **Port**: 5050
-- **URL**: http://54.80.204.92:5050
-- Process: Flask dev server (needs systemd for production)
-
-### Existing Services (DO NOT TOUCH)
-- Port 5001: OnyxPoker server
-- Port 5050: Reus Party Tracker ✅
-
----
-
-## 📋 IMPLEMENTATION PHASES
-
-### Phase 1: Basic Setup ✅
-- [x] Create project structure
-- [x] Create documentation (AGENTS.md, AMAZONQ.md, README.md)
-- [x] Create GitHub repo (apmlabs/reuspartytracker)
-- [x] Basic Flask app skeleton
-
-### Phase 2: YouTube Integration ✅
-- [x] Playwright screenshot capture
-- [x] YouTube cookies authentication
-- [x] Party level calculation
-- [x] Scheduled capture task (30 sec interval)
-
-### Phase 3: Frontend ✅
-- [x] YouTube embed
-- [x] Party level display
-- [x] People count display
-- [x] Dark/light theme toggle
-- [x] Auto-refresh (30s screenshots, 15min restaurants)
-
-### Phase 4: Restaurant Data ✅
-- [x] Outscraper API integration (Popular Times)
-- [x] Restaurant list for all 3 plazas (14 restaurants)
-- [x] Busyness data display with "Closed"/"Open" status
-- [x] 15-minute caching
-- [x] Combined party level (people + restaurant avg)
-
-### Phase 5: Historical Data & Charts ✅
-- [x] InfluxDB time-series database (infinite retention)
-- [x] Party history API endpoint
-- [x] Restaurant history API endpoint
-- [x] Daily (24h) and Weekly (7d) charts for people count
-- [x] Daily and Weekly charts for each plaza's avg busyness
-- [x] Chart.js visualization
-
-### Phase 6: Polish (in progress)
-- [ ] Error handling improvements
-- [ ] Fallback to backup webcam
-- [ ] Mobile responsive
-- [ ] Admin interface for historical data
-
----
-
-## 🔑 CRITICAL LESSONS
-
-### From This Project
-1. **YouTube cookies expire** - They rotate for security. When screenshots show "Sign in to confirm you're not a bot", export fresh cookies from browser
-2. **Use Netscape format for yt-dlp** - JSON cookies work for Playwright, but yt-dlp needs Netscape .txt format
-3. **yt-dlp validates cookies** - It tells you if cookies are expired, useful for debugging
-
-### From Other Projects
-1. **Don't mess with existing services** - Check ports before deploying
-2. **Configuration over hardcoding** - Make intervals easily changeable
-3. **Document everything** - Context files are agent memory
-4. **Test incrementally** - Get each phase working before next
-5. **Use fs_write tool for file changes** - Don't use cat/sed to modify files, use the write tool
-
----
-
-## 🐛 KNOWN ISSUES / RISKS
-
-1. **YouTube cookies expire** - Cookies rotate periodically, need fresh export when bot prompt appears
-2. **YouTube stream availability** - May go offline, need fallback
-3. **AI accuracy** - Crowd counting in low light may be inaccurate
-4. **Google Maps rate limits** - May need caching strategy
-5. **Cost** - AI API calls cost money, optimize frequency
-
----
-
-## 📚 DOCUMENTATION STRUCTURE
-
-- **AGENTS.md** (this file) - Permanent knowledge, architecture
-- **AMAZONQ.md** - Session history, progress tracking
-- **README.md** - User-facing quick start guide
+1. YouTube cookies expire periodically - refresh from browser when bot prompt appears
+2. AI crowd counting less accurate in low light
+3. Some restaurants lack Google Popular Times data
