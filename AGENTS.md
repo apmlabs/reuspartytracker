@@ -15,13 +15,13 @@ Inspired by https://www.pizzint.watch/ but for tracking party vibes in Reus.
 **GitHub**: apmlabs/reuspartytracker
 
 ### Recent Updates (Jan 28, 2026)
-- ✅ Added Cars tracking (count of vehicles in plaza)
-- ✅ Added Police tracking (cars×2 + vans×4 + uniformed×1 scoring)
+- ✅ Split people counting: street vs terrace (restaurant patrons)
+- ✅ Unified chart with 5 metrics: Total, Street, Terrace, Cars, Police
+- ✅ Time range selector: 24h, 7d, 30d, 1y
+- ✅ Clickable legend to toggle lines
+- ✅ Hide plazas with no busyness data
+- ✅ Added Cars and Police tracking
 - ✅ Red header alert when police detected
-- ✅ 4 new charts: Cars 24h/7d, Police 24h/7d
-- ✅ Raw police data saved to DB (cars, vans, uniformed counts)
-- ✅ Fixed cache name mismatch bug (query vs API names)
-- ✅ Closed restaurants now return/save busyness=0
 - ✅ Daily InfluxDB backup (3am, keeps 7 days)
 
 ### Previous Updates (Jan 27, 2026)
@@ -350,6 +350,7 @@ reuspartytracker/
 2. **Configuration over hardcoding** - Make intervals easily changeable
 3. **Document everything** - Context files are agent memory
 4. **Test incrementally** - Get each phase working before next
+5. **Use fs_write tool for file changes** - Don't use cat/sed to modify files, use the write tool
 
 ---
 

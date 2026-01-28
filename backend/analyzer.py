@@ -26,26 +26,55 @@ def analyze_image(image_path):
     
     prompt = f"""Look at this image: {image_path}
 
-This is Plaça Mercadal in Reus, Catalonia, Spain.
+This is Plaça Mercadal in Reus, Spain. Count people, vehicles, and detect police.
 
-POLICE VEHICLES TO IDENTIFY:
-1. Policía Local (Reus): Yellow body + blue upper section + white roof, OR white/blue cars
-2. Mossos d'Esquadra (Catalan police): Dark blue cars with red/burgundy stripe
-3. Guardia Civil: Dark green vehicles
-4. Policía Nacional: Blue and white vehicles
+## PEOPLE COUNTING
+Count people in TWO categories:
+1. "street": People walking/standing in the plaza (not at restaurants)
+2. "terrace": People sitting at restaurant terraces/outdoor seating
+- Do NOT count people inside buildings or partially hidden
+- Be CONSERVATIVE - if unsure, don't count it
 
-Also look for: Blue flashing lights on any vehicle (especially at night), light bars on roof
+## POLICE DETECTION (CRITICAL)
 
-Do NOT count as police: Regular taxis, delivery vans, ambulances
+### Policía Local (Reus) - MOST COMMON
+Small car with THREE-TONE paint:
+- Bottom/lower body: BRIGHT YELLOW
+- Middle/upper doors: DARK BLUE  
+- Roof: WHITE
+- Size: Regular car (sedan/hatchback), NOT a van
+- Key identifier: YELLOW + DARK BLUE combination on a small car
 
-Count and respond with ONLY a JSON object:
-{{"people": <number>, "cars": <vehicles NOT police>, "police_cars": <police cars>, "police_vans": <police vans>, "police_uniformed": <officers>}}"""
+### Other Police Types
+- Mossos d'Esquadra: Dark blue car with RED stripe
+- Guardia Civil: Dark GREEN vehicles
+- Policía Nacional: Blue and white vehicles
+- Any vehicle with BLUE FLASHING LIGHTS (especially at night)
+
+### FALSE POSITIVES - NOT POLICE
+- DHL van: LARGE yellow van with "DHL" red text. Solid yellow, NO dark blue. Much bigger than a car.
+- Correos van: Yellow postal van with branding
+- Any vehicle with company logos
+
+### KEY DIFFERENCES
+- Police: YELLOW + DARK BLUE + WHITE, small CAR size, no branding
+- DHL: Solid YELLOW only (no dark blue), large VAN size, has "DHL" text
+
+### VERIFICATION
+For each yellow vehicle:
+1. CAR-sized or VAN-sized?
+2. Has DARK BLUE on upper section?
+3. Has company branding?
+→ CAR + dark blue + no branding = POLICE
+→ VAN or no dark blue or branding = NOT POLICE
+
+Return ONLY JSON: {{"street": N, "terrace": N, "cars": N, "police_cars": N, "police_vans": N, "police_uniformed": N}}"""
     
     print(f"[DEBUG] Calling kiro-cli...", flush=True)
     
     try:
         result = subprocess.run(
-            ['/home/ubuntu/.local/bin/kiro-cli', 'chat', '--trust-all-tools', prompt],
+            ['/home/ubuntu/.local/bin/kiro-cli', 'chat', '--agent', 'party-tracker', '--trust-all-tools', prompt],
             capture_output=True, text=True, timeout=120, input=''
         )
         
@@ -60,8 +89,14 @@ Count and respond with ONLY a JSON object:
         if match:
             data = json.loads(match.group())
             print(f"[DEBUG] Parsed: {data}", flush=True)
+            street = data.get("street", 0)
+            terrace = data.get("terrace", 0)
+            # Support old format too
+            people = data.get("people", street + terrace)
             return {
-                "people": data.get("people", 0),
+                "people": people if people else street + terrace,
+                "street": street,
+                "terrace": terrace,
                 "cars": data.get("cars", 0),
                 "police_cars": data.get("police_cars", 0),
                 "police_vans": data.get("police_vans", 0),

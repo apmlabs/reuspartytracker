@@ -91,22 +91,22 @@ def should_fetch_restaurant(cached_restaurant, name=""):
     now = datetime.now(spain)
     hour = now.hour
     
-    # Check whitelist FIRST (before cache check)
-    has_popular_times = any(pt in name for pt in RESTAURANTS_WITH_POPULAR_TIMES)
-    
-    # No Popular Times data - only fetch at 21:00 regardless of cache
-    if not has_popular_times:
-        if hour != 21:
-            api_logger.info(f" Skipping {name}: no popular times, not 21:00")
-            return False
-        return True
-    
-    # Has Popular Times but no cache - must fetch
+    # No cache at all - must fetch to get working_hours
     if not cached_restaurant:
         return True
     
     hours_known = cached_restaurant.get('hours_known', False)
     is_open = cached_restaurant.get('is_open', True)
+    
+    # Check whitelist
+    has_popular_times = any(pt in name for pt in RESTAURANTS_WITH_POPULAR_TIMES)
+    
+    # No Popular Times data - only fetch at 21:00 (to discover new data)
+    if not has_popular_times:
+        if hour != 21:
+            api_logger.info(f" Skipping {name}: no popular times, not 21:00")
+            return False
+        return True
     
     # Closed - skip
     if hours_known and not is_open:
@@ -200,6 +200,7 @@ def fetch_restaurant_data(query):
                 "reviews": place.get("reviews"),
                 "is_open": is_open,
                 "hours_known": hours_known,
+                "working_hours": place.get("working_hours"),
             }
         api_logger.info(f" No data for: {query}")
     except Exception as e:
@@ -231,9 +232,17 @@ def fetch_all_restaurants(force_refresh=False):
             cached_by_name[r.get('name', '')] = r
     
     def find_cached(query_name):
-        """Find cached restaurant by substring match."""
+        """Find cached restaurant by character overlap (>60% match)."""
+        q = query_name.lower()
         for cached_name, data in cached_by_name.items():
-            if query_name in cached_name or cached_name in query_name:
+            c = cached_name.lower()
+            # Check substring first
+            if q in c or c in q:
+                return data
+            # Check character overlap
+            shorter, longer = (q, c) if len(q) < len(c) else (c, q)
+            matches = sum(1 for i, ch in enumerate(shorter) if i < len(longer) and ch == longer[i])
+            if matches / len(shorter) > 0.6:
                 return data
         return None
     
@@ -256,8 +265,10 @@ def fetch_all_restaurants(force_refresh=False):
                 else:
                     result[plaza].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True, "hours_known": False})
             elif cached_r:
-                # Use cached, but zero busyness if closed
-                if not cached_r.get('is_open'):
+                # Recalculate is_open based on current time
+                is_open, hours_known = is_open_now(cached_r.get('working_hours'))
+                cached_r = {**cached_r, 'is_open': is_open, 'hours_known': hours_known}
+                if not is_open:
                     cached_r = {**cached_r, 'busyness': 0}
                 result[plaza].append(cached_r)
             else:
@@ -291,15 +302,29 @@ def fetch_top_restaurants(force_refresh=False):
     
     if not force_refresh and cached_data:
         # Only return the 5 TOP_RESTAURANTS, not archived ones
-        filtered = [r for r in cached_data if any(n in r.get('name', '') for n in top_names)]
+        filtered = []
+        for r in cached_data:
+            if any(n in r.get('name', '') for n in top_names):
+                # Recalculate is_open based on current time
+                is_open, hours_known = is_open_now(r.get('working_hours'))
+                r = {**r, 'is_open': is_open, 'hours_known': hours_known}
+                if not is_open:
+                    r = {**r, 'busyness': 0}
+                filtered.append(r)
         return filtered, cache.get('timestamp', 0)
     
-    # Build lookup by name (substring match)
+    # Build lookup by name
     cached_by_name = {r.get('name', ''): r for r in cached_data}
     
     def find_cached(query_name):
+        q = query_name.lower()
         for cached_name, data in cached_by_name.items():
-            if query_name in cached_name or cached_name in query_name:
+            c = cached_name.lower()
+            if q in c or c in q:
+                return data
+            shorter, longer = (q, c) if len(q) < len(c) else (c, q)
+            matches = sum(1 for i, ch in enumerate(shorter) if i < len(longer) and ch == longer[i])
+            if matches / len(shorter) > 0.6:
                 return data
         return None
     
@@ -316,6 +341,11 @@ def fetch_top_restaurants(force_refresh=False):
             elif cached_r:
                 result.append(cached_r)
         elif cached_r:
+            # Recalculate is_open based on current time
+            is_open, hours_known = is_open_now(cached_r.get('working_hours'))
+            cached_r = {**cached_r, 'is_open': is_open, 'hours_known': hours_known}
+            if not is_open:
+                cached_r = {**cached_r, 'busyness': 0}
             result.append(cached_r)
         else:
             # No cache, fetch anyway to get basic info
