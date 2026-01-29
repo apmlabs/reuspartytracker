@@ -117,3 +117,23 @@ Fixed is_open cache bug and major code refactor.
 - is_open returning stale cached value instead of recalculating
 - Duplicate code in fetch_all_restaurants/fetch_top_restaurants
 - Duplicate code in save_restaurant_data/save_top_restaurant_data
+
+---
+
+## Session 8 - January 29, 2026 (night)
+
+### Summary
+API endpoint consolidation and frontend fixes.
+
+### Changes
+- Consolidated 6 API endpoints → 3 endpoints
+  - Removed `/api/top-restaurants` (merged into `/api/restaurants`)
+  - Removed `/api/history/restaurants` and `/api/history/top-restaurants`
+  - Added `/api/history?type=restaurants` with optional `&category=top`
+- Fixed frontend not showing plaza sections when restaurants closed
+- Added auto-hide for `placa_del_teatre` (no Popular Times data yet)
+- Cleaned corrupted cache entry with null name
+
+### Bugs Fixed
+- Plaza sections hidden when all restaurants closed (canvas elements not created)
+- Query string bug: `?category=top?hours=` → `?category=top&hours=`

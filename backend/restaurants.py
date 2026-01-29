@@ -263,20 +263,6 @@ def fetch_restaurants(categories=None, force_refresh=False):
     return fallback, cache.get('timestamp', 0)
 
 
-# Convenience functions for backward compatibility
-def fetch_all_restaurants(force_refresh=False):
-    """Fetch plaza restaurants only."""
-    plazas = ['placa_mercadal', 'placa_evarist_fabregas', 'placa_del_teatre']
-    data, ts = fetch_restaurants(plazas, force_refresh)
-    return data, ts
-
-
-def fetch_top_restaurants(force_refresh=False):
-    """Fetch top 5 restaurants only."""
-    data, ts = fetch_restaurants(['top'], force_refresh)
-    return data.get('top', []), ts
-
-
 if __name__ == '__main__':
     import json
     data, ts = fetch_restaurants()
