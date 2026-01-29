@@ -9,7 +9,7 @@ from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
 from analyzer import get_party_level, analyze_image, calc_police_score
 from restaurants import fetch_restaurants
-from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history, get_restaurant_history_by_name
+from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history, get_restaurant_history_by_name, get_police_sightings
 
 app = Flask(__name__, static_folder='../frontend')
 DATA_FILE = os.path.join(os.path.dirname(__file__), '..', 'data', 'party_data.json')
@@ -139,6 +139,44 @@ def get_screenshot():
     return '', 404
 
 
+@app.route('/api/screenshot/<filename>')
+def get_screenshot_by_name(filename):
+    """Serve a specific screenshot by filename."""
+    path = os.path.join(SCREENSHOTS_DIR, filename)
+    if os.path.exists(path):
+        return send_file(path, mimetype='image/png')
+    return '', 404
+
+
+@app.route('/api/police-sightings')
+def get_police_sightings_api():
+    """Return all police sightings with matched screenshot filenames."""
+    sightings = get_police_sightings()
+    files = sorted(glob.glob(os.path.join(SCREENSHOTS_DIR, 'frame_*.png')))
+    file_times = []
+    for f in files:
+        name = os.path.basename(f)
+        # frame_20260129_121152.png -> 2026-01-29T12:11:52
+        try:
+            ts = name[6:21]  # 20260129_121152
+            file_times.append((name, ts))
+        except:
+            pass
+    
+    for s in sightings:
+        # Find closest screenshot to this timestamp
+        ts = s['timestamp'][:19].replace('-', '').replace('T', '_').replace(':', '')  # 20260129_121746
+        best = None
+        for fname, ftime in file_times:
+            if ftime <= ts:
+                best = fname
+            else:
+                break
+        s['screenshot'] = best
+    
+    return jsonify(sightings)
+
+
 @app.route('/api/update', methods=['POST'])
 def update_count():
     data = load_data()
@@ -159,6 +197,11 @@ def refresh():
 @app.route('/')
 def index():
     return send_from_directory(app.static_folder, 'index.html')
+
+
+@app.route('/police')
+def police_page():
+    return send_from_directory(app.static_folder, 'police.html')
 
 
 if __name__ == '__main__':
