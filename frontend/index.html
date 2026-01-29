@@ -118,7 +118,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const plazaOrder = ['placa_del_teatre', 'placa_mercadal', 'placa_evarist_fabregas'];
+        const plazaOrder = ['placa_mercadal', 'placa_evarist_fabregas', 'placa_del_teatre'];
         const plazaColors = {'placa_mercadal': '#2ecc71', 'placa_evarist_fabregas': '#ffe66d', 'placa_del_teatre': '#95e1d3'};
         const charts = {};
         const chartOpts = {responsive: true, plugins: {legend: {display: false}, tooltip: {enabled: true}}, scales: {y: {beginAtZero: true, max: 100}}, interaction: {intersect: false, mode: 'index'}};
@@ -192,8 +192,7 @@
                 let html = '';
                 for (const plaza of plazaOrder) {
                     const restaurants = data[plaza] || [];
-                    // Hide plaza if no restaurant has busyness > 0
-                    if (!restaurants.some(r => r.busyness > 0)) continue;
+                    if (plaza === 'placa_del_teatre' && !restaurants.some(r => r.busyness > 0)) continue;
                     const name = plaza.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     html += `<div class="plaza-row">
                         <div class="plaza-info"><div class="plaza"><h3>📍 ${name}</h3>`;
@@ -246,8 +245,8 @@
         async function fetchHistory() {
             try {
                 const [restDaily, restWeekly] = await Promise.all([
-                    fetch('/api/history/restaurants?hours=24').then(r => r.json()),
-                    fetch('/api/history/restaurants?hours=168').then(r => r.json())
+                    fetch('/api/history?type=restaurants&hours=24').then(r => r.json()),
+                    fetch('/api/history?type=restaurants&hours=168').then(r => r.json())
                 ]);
                 loadPeopleChart(24);
                 for (const plaza of plazaOrder) {
@@ -262,10 +261,11 @@
         async function fetchTopRestaurants() {
             try {
                 const [resp, history] = await Promise.all([
-                    fetch('/api/top-restaurants').then(r => r.json()),
-                    fetch('/api/history/top-restaurants?hours=168').then(r => r.json())
+                    fetch('/api/restaurants').then(r => r.json()),
+                    fetch('/api/history?type=restaurants&category=top&hours=168').then(r => r.json())
                 ]);
-                const data = resp.data || resp;
+                const allData = resp.data || resp;
+                const data = allData.top || [];
                 const ts = resp.last_updated ? new Date(resp.last_updated * 1000).toLocaleTimeString() : '';
                 // Filter: only show restaurants that have history data
                 const filtered = data.filter(r => history[r.name] && history[r.name].length > 0);
@@ -302,8 +302,8 @@
         async function fetchTopHistory(restaurants) {
             try {
                 const [daily, weekly] = await Promise.all([
-                    fetch('/api/history/top-restaurants?hours=24').then(r => r.json()),
-                    fetch('/api/history/top-restaurants?hours=168').then(r => r.json())
+                    fetch('/api/history?type=restaurants&category=top&hours=24').then(r => r.json()),
+                    fetch('/api/history?type=restaurants&category=top&hours=168').then(r => r.json())
                 ]);
                 const colors = ['#ff6b6b','#2ecc71','#ffe66d','#95e1d3','#ff9f43','#a29bfe','#fd79a8','#00cec9','#e17055','#74b9ff',
                                '#ffeaa7','#dfe6e9','#b2bec3','#636e72','#2d3436','#fab1a0','#81ecec','#55efc4','#fdcb6e','#e84393'];
@@ -334,12 +334,10 @@
             markers.forEach(m => map.removeLayer(m));
             markers = [];
             try {
-                const [plazasResp, topResp] = await Promise.all([
-                    fetch('/api/restaurants').then(r => r.json()),
-                    fetch('/api/top-restaurants').then(r => r.json())
-                ]);
-                const plazas = plazasResp.data || plazasResp;
-                const top = topResp.data || topResp;
+                const resp = await fetch('/api/restaurants').then(r => r.json());
+                const allData = resp.data || resp;
+                const plazas = {placa_mercadal: allData.placa_mercadal, placa_evarist_fabregas: allData.placa_evarist_fabregas, placa_del_teatre: allData.placa_del_teatre};
+                const top = allData.top || [];
                 const all = [...Object.values(plazas).flat(), ...top];
                 for (const rest of all) {
                     const coord = COORDS[rest.name];

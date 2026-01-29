@@ -26,12 +26,11 @@ Inspired by https://www.pizzint.watch/
 │                     FLASK API (port 5050)                       │
 ├─────────────────────────────────────────────────────────────────┤
 │ GET /api/party              → Current party data                │
-│ GET /api/restaurants        → Plaza restaurants                 │
-│ GET /api/top-restaurants    → Top 5 restaurants                 │
+│ GET /api/restaurants        → All restaurants by category       │
 │ GET /api/screenshot         → Latest screenshot                 │
-│ GET /api/history?hours=N    → Party history                     │
-│ GET /api/history/restaurants?hours=N → Plaza avg history        │
-│ GET /api/history/top-restaurants?hours=N → Top restaurant hist  │
+│ GET /api/history?hours=N    → Party history (default)           │
+│ GET /api/history?type=restaurants → Plaza busyness by category  │
+│ GET /api/history?type=restaurants&category=top → Top by name    │
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐

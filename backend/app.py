@@ -8,7 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from config import SCREENSHOT_INTERVAL, YOUTUBE_URL, PORT
 from screenshot import capture_youtube_frame
 from analyzer import get_party_level, analyze_image, calc_police_score
-from restaurants import fetch_all_restaurants, fetch_top_restaurants, fetch_restaurants
+from restaurants import fetch_restaurants
 from database import save_party_data, save_restaurant_data, get_party_history, get_restaurant_history, get_restaurant_history_by_name
 
 app = Flask(__name__, static_folder='../frontend')
@@ -34,7 +34,7 @@ def save_data(data):
 def get_restaurant_busyness_avg():
     """Get average busyness of open Plaça Mercadal restaurants."""
     try:
-        data, _ = fetch_all_restaurants()
+        data, _ = fetch_restaurants(['placa_mercadal'])
         mercadal = data.get('placa_mercadal', [])
         values = [r['busyness'] for r in mercadal if r.get('is_open') and r.get('busyness') is not None]
         return sum(values) / len(values) if values else None
@@ -113,34 +113,22 @@ def get_party():
 
 @app.route('/api/restaurants')
 def get_restaurants():
-    """Return plaza restaurants with busyness."""
-    data, timestamp = fetch_all_restaurants()
-    return jsonify({"data": data, "last_updated": timestamp})
-
-
-@app.route('/api/top-restaurants')
-def get_top_restaurants():
-    """Return top 5 restaurants with busyness."""
-    data, timestamp = fetch_top_restaurants()
+    """Return all restaurants by category."""
+    data, timestamp = fetch_restaurants()  # All non-archived
     return jsonify({"data": data, "last_updated": timestamp})
 
 
 @app.route('/api/history')
 def get_history():
+    """Get history data. type=party (default) or restaurants. category=top for top restaurants."""
     hours = request.args.get('hours', 24, type=int)
+    data_type = request.args.get('type', 'party')
+    if data_type == 'restaurants':
+        category = request.args.get('category')
+        if category == 'top':
+            return jsonify(get_restaurant_history_by_name(hours, ['top']))
+        return jsonify(get_restaurant_history(hours))
     return jsonify(get_party_history(hours))
-
-
-@app.route('/api/history/restaurants')
-def get_rest_history():
-    hours = request.args.get('hours', 24, type=int)
-    return jsonify(get_restaurant_history(hours))
-
-
-@app.route('/api/history/top-restaurants')
-def get_top_rest_history():
-    hours = request.args.get('hours', 24, type=int)
-    return jsonify(get_restaurant_history_by_name(hours, ['top']))
 
 
 @app.route('/api/screenshot')
