@@ -28,9 +28,11 @@ Inspired by https://www.pizzint.watch/
 │ GET /api/party              → Current party data                │
 │ GET /api/restaurants        → All restaurants by category       │
 │ GET /api/screenshot         → Latest screenshot                 │
+│ GET /api/screenshot/<file>  → Specific screenshot by filename   │
 │ GET /api/history?hours=N    → Party history (default)           │
 │ GET /api/history?type=restaurants → Plaza busyness by category  │
 │ GET /api/history?type=restaurants&category=top → Top by name    │
+│ GET /api/police-sightings   → All police detections + screenshots│
 └─────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────┐
@@ -42,6 +44,15 @@ Inspired by https://www.pizzint.watch/
 │ Plaza sections: Restaurant list + 24h/7d charts                 │
 │ Restaurant Heatmap (Leaflet)                                    │
 │ Top 5 Restaurants with individual charts                        │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│                     FRONTEND (police.html)                      │
+├─────────────────────────────────────────────────────────────────┤
+│ Screenshot viewer with prev/next navigation                     │
+│ Info bar: timestamp, police score, breakdown, people count      │
+│ Chart: Police score + people over time (clickable)              │
+│ List: All sightings (newest first, clickable)                   │
 └─────────────────────────────────────────────────────────────────┘
 ```
 

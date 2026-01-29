@@ -50,6 +50,30 @@ def save_restaurant_data(restaurants_by_category):
                 write_api.write(bucket=INFLUX_BUCKET, record=point)
 
 
+def get_police_sightings():
+    """Get all timestamps where police_score > 0."""
+    with get_client() as client:
+        query = f'''from(bucket: "{INFLUX_BUCKET}")
+            |> range(start: 0)
+            |> filter(fn: (r) => r._measurement == "party")
+            |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+            |> filter(fn: (r) => r.police_score > 0)
+            |> sort(columns: ["_time"], desc: true)'''
+        result = client.query_api().query(query)
+        data = []
+        for table in result:
+            for record in table.records:
+                data.append({
+                    "timestamp": record.get_time().isoformat(),
+                    "people_count": record.values.get("people_count") or 0,
+                    "police_score": record.values.get("police_score") or 0,
+                    "police_cars": record.values.get("police_cars") or 0,
+                    "police_vans": record.values.get("police_vans") or 0,
+                    "police_uniformed": record.values.get("police_uniformed") or 0
+                })
+        return data
+
+
 def get_party_history(hours=24):
     with get_client() as client:
         query = f'''from(bucket: "{INFLUX_BUCKET}")

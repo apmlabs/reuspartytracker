@@ -154,3 +154,25 @@ Fixed stale cache bugs causing ~300+ unnecessary API calls per day.
 1. `should_fetch()` checked `cached.get('is_open')` which was stale - now recalculates from `working_hours`
 2. Unknown restaurants defaulted to `is_open=True` - now uses `9 <= hour < 23`
 3. Cache only saved when `got_any=True` - now always saves with recalculated values
+
+## Session 10 - January 29, 2026 (afternoon)
+
+### Summary
+Added police sightings page with screenshot viewer.
+
+### Changes
+- Added `/api/police-sightings` endpoint - returns all police detections with matched screenshot filenames
+- Added `/api/screenshot/<filename>` endpoint - serve specific screenshot by name
+- Created `police.html` - dedicated page for browsing police sightings
+  - Full-width screenshot with prev/next navigation (keyboard arrows supported)
+  - Info bar: position counter, timestamp, police score, breakdown, people count
+  - Interactive chart (police score + people) - click to jump to sighting
+  - Scrollable list of all sightings (newest first)
+  - Dark/light theme toggle
+
+### New Files
+- `frontend/police.html`
+
+### Modified Files
+- `backend/app.py` - added 3 new routes
+- `backend/database.py` - added `get_police_sightings()` function
