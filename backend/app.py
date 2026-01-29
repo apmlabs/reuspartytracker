@@ -207,7 +207,7 @@ def police_page():
 if __name__ == '__main__':
     scheduler = BackgroundScheduler()
     scheduler.add_job(update_party_data, 'interval', seconds=SCREENSHOT_INTERVAL)
-    scheduler.add_job(refresh_restaurant_data, 'interval', minutes=15)
+    scheduler.add_job(refresh_restaurant_data, 'interval', minutes=30)
     scheduler.start()
     scheduler.add_job(update_party_data, 'date', run_date=datetime.now().replace(microsecond=0).isoformat())
     print(f"Starting server on port {PORT}, screenshot interval: {SCREENSHOT_INTERVAL}s")

@@ -176,3 +176,25 @@ Added police sightings page with screenshot viewer.
 ### Modified Files
 - `backend/app.py` - added 3 new routes
 - `backend/database.py` - added `get_police_sightings()` function
+
+## Session 11 - January 29, 2026 (evening)
+
+### Summary
+Reduced restaurant list and API call frequency to cut costs.
+
+### Changes
+- Reduced active restaurants from 18 to 7
+- Changed API refresh interval from 15 → 30 minutes
+- Updated frontend to hide restaurants with no busyness data
+- Estimated cost: ~$0.38/day (~$11/month)
+
+### Active Restaurants
+- Plaça Mercadal: Casa Coder, Goofretti
+- Plaça Evarist Fàbregas: La Presó, Sibuya
+- Top: Museu del Vermut, Khirganga, Ciutat Gaudí
+
+### Archived (moved from active)
+- Roslena Mercadal, El Mestral, Vivari, Maiki Poké, DITALY, Déu n'hi Do, Xivarri
+- Yokoso, Saona Reus
+- Oplontina, As de Copas (entire placa_del_teatre)
+- Tacos La Mexicanita

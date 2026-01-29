@@ -191,8 +191,10 @@
                 const ts = resp.last_updated ? new Date(resp.last_updated * 1000).toLocaleTimeString() : '';
                 let html = '';
                 for (const plaza of plazaOrder) {
-                    const restaurants = data[plaza] || [];
-                    if (plaza === 'placa_del_teatre' && !restaurants.some(r => r.busyness > 0)) continue;
+                    let restaurants = data[plaza] || [];
+                    // Hide restaurants with no busyness data (null when open)
+                    restaurants = restaurants.filter(r => r.busyness !== null || !r.is_open);
+                    if (!restaurants.length) continue;
                     const name = plaza.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
                     html += `<div class="plaza-row">
                         <div class="plaza-info"><div class="plaza"><h3>📍 ${name}</h3>`;
@@ -201,10 +203,8 @@
                         const q = r.hours_known === false ? '?' : '';
                         if (!r.is_open) {
                             cls = 'closed'; busy = 'Closed' + q;
-                        } else if (r.busyness !== null) {
-                            cls = 'included'; busy = r.busyness + '%';
                         } else {
-                            cls = 'excluded'; busy = 'Open' + q;
+                            cls = 'included'; busy = r.busyness + '%';
                         }
                         html += `<div class="restaurant ${cls}"><span>${r.name}</span><span class="busyness">${busy}</span></div>`;
                     }
