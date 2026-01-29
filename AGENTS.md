@@ -17,7 +17,7 @@ Inspired by https://www.pizzint.watch/
 │   2. Kiro CLI analyzes image (2 calls: people/cars + police)    │
 │   3. Saves to InfluxDB + party_data.json                        │
 │                                                                 │
-│ Every 15 min: refresh_restaurant_data()                         │
+│ Every 30 min: refresh_restaurant_data()                         │
 │   - Fetches from Outscraper API (smart: skips closed)           │
 │   - Saves to InfluxDB + restaurants_cache.json                  │
 └─────────────────────────────────────────────────────────────────┘
@@ -88,7 +88,7 @@ reuspartytracker/
 | Component | Interval | Location |
 |-----------|----------|----------|
 | Screenshot capture | 5 min | config.py SCREENSHOT_INTERVAL |
-| Restaurant refresh | 15 min | app.py scheduler |
+| Restaurant refresh | 30 min | app.py scheduler |
 | Frontend screenshot | 30 sec | index.html |
 | Frontend party data | 60 sec | index.html |
 | Frontend restaurants | 15 min | index.html |
@@ -118,14 +118,12 @@ police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
 - Primary: https://www.youtube.com/watch?v=L9HyLjRVN8E (Plaça Mercadal)
 - Requires cookies (youtube_cookies.json) - refresh when expired
 
-### Restaurants
-**Plaza Mercadal**: Casa Coder, Roslena Mercadal, Goofretti, El Mestral, Vivari, Maiki Poké, DITALY, Déu n'hi Do
+### Restaurants (7 active, rest archived)
+**Plaça Mercadal**: Casa Coder, Goofretti
 
-**Plaza Evarist Fàbregas**: La Presó, Sibuya Urban Sushi Bar, Yokoso, Saona Reus
+**Plaça Evarist Fàbregas**: La Presó, Sibuya Urban Sushi Bar
 
-**Plaza del Teatre**: Oplontina, As de Copas
-
-**Top 5** (by reviews, with Popular Times): Restaurant del Museu del Vermut, Tacos La Mexicanita, Khirganga Restaurant, Xivarri Gastronomía, Ciutat Gaudí
+**Top 3** (by reviews, with Popular Times): Restaurant del Museu del Vermut, Khirganga Restaurant, Ciutat Gaudí
 
 ## InfluxDB Schema
 

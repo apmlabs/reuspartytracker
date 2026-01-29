@@ -26,20 +26,26 @@ DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sun
 # All restaurants by category
 RESTAURANTS = {
     "placa_mercadal": [
-        "Casa Coder, Reus", "Roslena Mercadal, Reus", "Goofretti, Reus", "El Mestral, Reus",
-        "Vivari, Reus", "Maiki Poké, Reus", "DITALY, Reus", "Déu n'hi Do, Reus",
+        "Casa Coder, Reus", "Goofretti, Reus",
     ],
     "placa_evarist_fabregas": [
-        "La Presó, Reus", "Sibuya Urban Sushi Bar, Reus", "Yokoso, Reus", "Saona Reus",
-    ],
-    "placa_del_teatre": [
-        "Oplontina, Reus", "As de Copas, Reus",
+        "La Presó, Reus", "Sibuya Urban Sushi Bar, Reus",
     ],
     "top": [
-        "Restaurant del Museu del Vermut, Reus", "Tacos La Mexicanita, Reus",
-        "Khirganga Restaurant, Reus", "Xivarri Gastronomía, Reus", "Ciutat Gaudí, Reus",
+        "Restaurant del Museu del Vermut, Reus", "Khirganga Restaurant, Reus", "Ciutat Gaudí, Reus",
     ],
     "archived": [
+        # Moved from placa_mercadal
+        "Roslena Mercadal, Reus", "El Mestral, Reus", "Vivari, Reus", 
+        "Maiki Poké, Reus", "DITALY, Reus", "Déu n'hi Do, Reus",
+        "Xivarri Gastronomía, Reus",
+        # Moved from placa_evarist_fabregas
+        "Yokoso, Reus", "Saona Reus",
+        # Moved from placa_del_teatre
+        "Oplontina, Reus", "As de Copas, Reus",
+        # Moved from top
+        "Tacos La Mexicanita, Reus",
+        # Original archived
         "Vermuts Rofes, Reus", "Cerveseria Tower, Reus", "Bar Bon-Mar, Reus",
         "Xapatti, Reus", "Restaurant Cal Marc, Reus", "Flaps, Reus",
         "VÍTRIC Taverna Gastronòmica, Reus", "Il Cuore, Reus", "Little Bangkok, Reus",
@@ -51,9 +57,8 @@ RESTAURANTS = {
 
 # Restaurants with confirmed Popular Times data
 HAS_POPULAR_TIMES = {
-    'Roslena Mercadal', 'Déu n\'hi Do', 'La Presó', 'Casa Coder', 'Saona Reus', 'Sibuya',
-    'Restaurant del Museu del Vermut', 'Tacos La Mexicanita', 'Khirganga Restaurant',
-    'Xivarri Gastronomía', 'Ciutat Gaudí'
+    'La Presó', 'Casa Coder', 'Sibuya', 'Goofretti',
+    'Restaurant del Museu del Vermut', 'Khirganga Restaurant', 'Ciutat Gaudí'
 }
 
 
