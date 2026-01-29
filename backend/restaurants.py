@@ -117,9 +117,11 @@ def should_fetch(cached, name=""):
             return False
         return True
     
-    if cached.get('hours_known') and not cached.get('is_open'):
-        api_logger.info(f" Skipping {name}: closed")
-        return False
+    if cached.get('hours_known'):
+        is_open, _ = is_open_now(cached.get('working_hours'))
+        if not is_open:
+            api_logger.info(f" Skipping {name}: closed")
+            return False
     
     if not cached.get('hours_known') and not (9 <= hour < 23):
         api_logger.info(f" Skipping {name}: unknown hours, outside 9-23")
@@ -237,30 +239,25 @@ def fetch_restaurants(categories=None, force_refresh=False):
                 elif cached:
                     result[cat].append(_recalc_is_open(cached))
                 else:
-                    result[cat].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True, "hours_known": False})
+                    is_open_default = 9 <= hour < 23
+                    result[cat].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": is_open_default, "hours_known": False})
             elif cached:
                 result[cat].append(_recalc_is_open(cached))
             else:
-                result[cat].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": True, "hours_known": False})
+                is_open_default = 9 <= hour < 23
+                result[cat].append({"name": name, "busyness": None, "rating": None, "reviews": None, "is_open": is_open_default, "hours_known": False})
     
-    # Save cache if got data
-    if got_any:
-        ts = datetime.now().timestamp()
-        # Merge with existing cache (keep archived discoveries)
-        save_data = {**cached_data}
-        for cat in result:
-            save_data[cat] = result[cat]
-        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
-        with open(CACHE_FILE, 'w') as f:
-            json.dump({"timestamp": ts, "data": save_data}, f)
-        # Return only requested categories (not archived unless requested)
-        return {k: v for k, v in result.items() if k in categories}, ts
+    # Save cache with recalculated values
+    ts = datetime.now().timestamp()
+    save_data = {**cached_data}
+    for cat in result:
+        save_data[cat] = result[cat]
+    os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+    with open(CACHE_FILE, 'w') as f:
+        json.dump({"timestamp": ts, "data": save_data}, f)
     
-    # Fallback to old cache
-    fallback = {}
-    for cat in categories:
-        fallback[cat] = [_recalc_is_open(r) for r in cached_data.get(cat, [])]
-    return fallback, cache.get('timestamp', 0)
+    # Return only requested categories (not archived unless requested)
+    return {k: v for k, v in result.items() if k in categories}, ts
 
 
 if __name__ == '__main__':

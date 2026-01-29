@@ -137,3 +137,20 @@ API endpoint consolidation and frontend fixes.
 ### Bugs Fixed
 - Plaza sections hidden when all restaurants closed (canvas elements not created)
 - Query string bug: `?category=top?hours=` → `?category=top&hours=`
+
+---
+
+## Session 9 - January 29, 2026 (night)
+
+### Summary
+Fixed stale cache bugs causing ~300+ unnecessary API calls per day.
+
+### Changes
+- Fixed `should_fetch()` reading stale `is_open` from cache instead of recalculating
+- Fixed hardcoded `is_open=True` for unknown restaurants (now uses hour-based default)
+- Fixed cache not updating when all API calls skipped (closed restaurants kept stale busyness)
+
+### Bugs Fixed
+1. `should_fetch()` checked `cached.get('is_open')` which was stale - now recalculates from `working_hours`
+2. Unknown restaurants defaulted to `is_open=True` - now uses `9 <= hour < 23`
+3. Cache only saved when `got_any=True` - now always saves with recalculated values
