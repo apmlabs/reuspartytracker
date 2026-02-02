@@ -97,7 +97,10 @@
             if (idx < 0 || idx >= sightings.length) return;
             currentIdx = idx;
             const s = sightings[idx];
-            document.getElementById('screenshot').src = s.screenshot ? `/api/screenshot/${s.screenshot}` : '';
+            const img = document.getElementById('screenshot');
+            img.style.opacity = '0.3';
+            img.onload = () => img.style.opacity = '1';
+            img.src = s.screenshot ? `/api/screenshot/${s.screenshot}` : '';
             document.getElementById('current-idx').textContent = idx + 1;
             document.getElementById('timestamp').textContent = new Date(s.timestamp).toLocaleString();
             document.getElementById('police-score').textContent = s.police_score;
