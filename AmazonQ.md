@@ -198,3 +198,22 @@ Reduced restaurant list and API call frequency to cut costs.
 - Yokoso, Saona Reus
 - Oplontina, As de Copas (entire placa_del_teatre)
 - Tacos La Mexicanita
+
+## Session 12 - February 2, 2026
+
+### Summary
+Further reduced restaurant list to minimize API costs.
+
+### Changes
+- Reduced active restaurants from 7 to 3
+- Removed entire "top" category
+- Disabled 21:00 archived check (commented out, not deleted)
+- Estimated cost: ~$0.14/day (~$4/month)
+
+### Active Restaurants
+- Plaça Mercadal: Casa Coder, Goofretti
+- Plaça Evarist Fàbregas: La Presó
+
+### Archived (moved from active)
+- Sibuya Urban Sushi Bar
+- Restaurant del Museu del Vermut, Khirganga Restaurant, Ciutat Gaudí (entire top category)

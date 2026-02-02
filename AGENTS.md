@@ -118,12 +118,10 @@ police_score = police_cars × 2 + police_vans × 4 + police_uniformed × 1
 - Primary: https://www.youtube.com/watch?v=L9HyLjRVN8E (Plaça Mercadal)
 - Requires cookies (youtube_cookies.json) - refresh when expired
 
-### Restaurants (7 active, rest archived)
+### Restaurants (3 active, rest archived)
 **Plaça Mercadal**: Casa Coder, Goofretti
 
-**Plaça Evarist Fàbregas**: La Presó, Sibuya Urban Sushi Bar
-
-**Top 3** (by reviews, with Popular Times): Restaurant del Museu del Vermut, Khirganga Restaurant, Ciutat Gaudí
+**Plaça Evarist Fàbregas**: La Presó
 
 ## InfluxDB Schema
 
