@@ -29,10 +29,7 @@ RESTAURANTS = {
         "Casa Coder, Reus", "Goofretti, Reus",
     ],
     "placa_evarist_fabregas": [
-        "La Presó, Reus", "Sibuya Urban Sushi Bar, Reus",
-    ],
-    "top": [
-        "Restaurant del Museu del Vermut, Reus", "Khirganga Restaurant, Reus", "Ciutat Gaudí, Reus",
+        "La Presó, Reus",
     ],
     "archived": [
         # Moved from placa_mercadal
@@ -40,9 +37,12 @@ RESTAURANTS = {
         "Maiki Poké, Reus", "DITALY, Reus", "Déu n'hi Do, Reus",
         "Xivarri Gastronomía, Reus",
         # Moved from placa_evarist_fabregas
-        "Yokoso, Reus", "Saona Reus",
+        "Sibuya Urban Sushi Bar, Reus", "Yokoso, Reus", "Saona Reus",
         # Moved from placa_del_teatre
         "Oplontina, Reus", "As de Copas, Reus",
+        # Moved from top
+        "Restaurant del Museu del Vermut, Reus", "Khirganga Restaurant, Reus", 
+        "Ciutat Gaudí, Reus", "Tacos La Mexicanita, Reus",
         # Moved from top
         "Tacos La Mexicanita, Reus",
         # Original archived
@@ -57,8 +57,7 @@ RESTAURANTS = {
 
 # Restaurants with confirmed Popular Times data
 HAS_POPULAR_TIMES = {
-    'La Presó', 'Casa Coder', 'Sibuya', 'Goofretti',
-    'Restaurant del Museu del Vermut', 'Khirganga Restaurant', 'Ciutat Gaudí'
+    'La Presó', 'Casa Coder', 'Goofretti'
 }
 
 
@@ -117,10 +116,14 @@ def should_fetch(cached, name=""):
     
     has_pt = any(pt in name for pt in HAS_POPULAR_TIMES)
     if not has_pt:
-        if hour != 21:
-            api_logger.info(f" Skipping {name}: no popular times, not 21:00")
-            return False
-        return True
+        # NOTE: 21:00 archived check disabled to reduce API costs
+        # Uncomment below to re-enable daily check for archived restaurants
+        # if hour != 21:
+        #     api_logger.info(f" Skipping {name}: no popular times, not 21:00")
+        #     return False
+        # return True
+        api_logger.info(f" Skipping {name}: no popular times (archived check disabled)")
+        return False
     
     if cached.get('hours_known'):
         is_open, _ = is_open_now(cached.get('working_hours'))
@@ -219,10 +222,12 @@ def fetch_restaurants(categories=None, force_refresh=False):
     
     # Fetch fresh data
     hour = datetime.now(SPAIN_TZ).hour
-    include_archived = hour == 21
-    cats_to_fetch = list(categories)
-    if include_archived and 'archived' not in cats_to_fetch:
-        cats_to_fetch.append('archived')
+    # NOTE: Archived check at 21:00 disabled to reduce API costs
+    # Uncomment below to re-enable
+    # include_archived = hour == 21
+    # if include_archived and 'archived' not in cats_to_fetch:
+    #     cats_to_fetch.append('archived')
+    include_archived = False
     
     result = {}
     got_any = False
