@@ -222,12 +222,11 @@ def fetch_restaurants(categories=None, force_refresh=False):
     
     # Fetch fresh data
     hour = datetime.now(SPAIN_TZ).hour
+    cats_to_fetch = list(categories)
     # NOTE: Archived check at 21:00 disabled to reduce API costs
-    # Uncomment below to re-enable
-    # include_archived = hour == 21
-    # if include_archived and 'archived' not in cats_to_fetch:
+    # Uncomment below to re-enable:
+    # if hour == 21 and 'archived' not in cats_to_fetch:
     #     cats_to_fetch.append('archived')
-    include_archived = False
     
     result = {}
     got_any = False

@@ -81,7 +81,7 @@
         
         <div class="top-section">
             <div class="video-container">
-                <img id="screenshot" src="/api/screenshot" alt="Plaça Mercadal">
+                <img id="screenshot" src="api/screenshot" alt="Plaça Mercadal">
             </div>
         </div>
         
@@ -169,7 +169,7 @@
 
         async function fetchData() {
             try {
-                const data = await (await fetch('/api/party')).json();
+                const data = await (await fetch('api/party')).json();
                 document.getElementById('party-level').textContent = data.party_level;
                 document.getElementById('people-count').textContent = data.people_count;
                 document.getElementById('car-count').textContent = data.car_count || 0;
@@ -186,7 +186,7 @@
 
         async function fetchRestaurants() {
             try {
-                const resp = await (await fetch('/api/restaurants')).json();
+                const resp = await (await fetch('api/restaurants')).json();
                 const data = resp.data || resp;
                 const ts = resp.last_updated ? new Date(resp.last_updated * 1000).toLocaleTimeString() : '';
                 let html = '';
@@ -231,7 +231,7 @@
 
         async function loadPeopleChart(hours) {
             setActiveBtn('ppl', hours);
-            const data = await fetch(`/api/history?hours=${hours}`).then(r => r.json());
+            const data = await fetch(`api/history?hours=${hours}`).then(r => r.json());
             const fmt = getTimeFmt(hours);
             makeMultiChart('party-chart', data.map(d => fmt(d.timestamp)), [
                 {label: 'Total', values: data.map(d => d.people_count), color: '#2ecc71'},
@@ -245,8 +245,8 @@
         async function fetchHistory() {
             try {
                 const [restDaily, restWeekly] = await Promise.all([
-                    fetch('/api/history?type=restaurants&hours=24').then(r => r.json()),
-                    fetch('/api/history?type=restaurants&hours=168').then(r => r.json())
+                    fetch('api/history?type=restaurants&hours=24').then(r => r.json()),
+                    fetch('api/history?type=restaurants&hours=168').then(r => r.json())
                 ]);
                 loadPeopleChart(24);
                 for (const plaza of plazaOrder) {
@@ -261,8 +261,8 @@
         async function fetchTopRestaurants() {
             try {
                 const [resp, history] = await Promise.all([
-                    fetch('/api/restaurants').then(r => r.json()),
-                    fetch('/api/history?type=restaurants&category=top&hours=168').then(r => r.json())
+                    fetch('api/restaurants').then(r => r.json()),
+                    fetch('api/history?type=restaurants&category=top&hours=168').then(r => r.json())
                 ]);
                 const allData = resp.data || resp;
                 const data = allData.top || [];
@@ -302,8 +302,8 @@
         async function fetchTopHistory(restaurants) {
             try {
                 const [daily, weekly] = await Promise.all([
-                    fetch('/api/history?type=restaurants&category=top&hours=24').then(r => r.json()),
-                    fetch('/api/history?type=restaurants&category=top&hours=168').then(r => r.json())
+                    fetch('api/history?type=restaurants&category=top&hours=24').then(r => r.json()),
+                    fetch('api/history?type=restaurants&category=top&hours=168').then(r => r.json())
                 ]);
                 const colors = ['#ff6b6b','#2ecc71','#ffe66d','#95e1d3','#ff9f43','#a29bfe','#fd79a8','#00cec9','#e17055','#74b9ff',
                                '#ffeaa7','#dfe6e9','#b2bec3','#636e72','#2d3436','#fab1a0','#81ecec','#55efc4','#fdcb6e','#e84393'];
@@ -323,7 +323,7 @@
         setInterval(fetchData, 60000);
         setInterval(() => fetchRestaurants().then(fetchHistory), 900000);
         setInterval(() => fetchTopRestaurants().then(fetchTopHistory), 900000);
-        setInterval(() => { document.getElementById('screenshot').src = '/api/screenshot?' + Date.now(); }, 30000);
+        setInterval(() => { document.getElementById('screenshot').src = 'api/screenshot?' + Date.now(); }, 30000);
 
         // Map
         const COORDS = {"Casa Coder":[41.1551769,1.1091342],"Roslena Mercadal":[41.1553117,1.1086407],"Goofretti Reus":[41.1548071,1.1089552],"El Mestral":[41.1550088,1.108353],"Maiki Poké":[41.15481,1.10886],"DITALY":[41.1549682,1.1090279],"Déu n'hi Do!":[41.155236,1.1090733],"La Presó":[41.155306,1.109933],"Sibuya Urban Sushi Bar":[41.1554246,1.1102739],"Yokoso":[41.1551878,1.109917],"Saona Reus":[41.1551485,1.1103246],"Oplontina PizzaBar":[41.1541791,1.1083387],"As De Copes Gastropub":[41.154012,1.108272],"Restaurant del Museu del Vermut":[41.1560537,1.1099607],"Tacos La Mexicanita Reus":[41.1538978,1.1124276],"Vermuts Rofes":[41.1577865,1.107371],"Khirganga Restaurant":[41.1516227,1.0976766],"Xivarri Gastronomía SLU":[41.1548652,1.1074598],"Ciutat Gaudí":[41.1538713,1.1021827],"Cerveseria Tower Reus":[41.1448412,1.1147073],"Bar Bon-Mar":[41.1545849,1.1072201],"Il Cuore":[41.1551298,1.1099764],"Little Bangkok":[41.1560105,1.1098194],"Brasería COSTILLAR DE REUS":[41.1529128,1.1065],"Mirall de Tres cuina d'Autor":[41.1548,1.1078],"Xapatti":[41.1545,1.1085],"Ferran Cerro Restaurant":[41.1542,1.1072],"Vill Rus Restaurant":[41.1555,1.1095],"Restaurant Cal Marc":[41.1538,1.1088],"Acarigua Arepera":[41.1547,1.1082],"Restaurant Lo Bon Profit":[41.1543,1.1076],"Restaurant La Comarca":[41.1535,1.1068],"Tapes i Tapes":[41.1549,1.1079],"Flaps":[41.1541,1.1091],"VÍTRIC Taverna Gastronòmica":[41.1546,1.1087]};
@@ -334,7 +334,7 @@
             markers.forEach(m => map.removeLayer(m));
             markers = [];
             try {
-                const resp = await fetch('/api/restaurants').then(r => r.json());
+                const resp = await fetch('api/restaurants').then(r => r.json());
                 const allData = resp.data || resp;
                 const plazas = {placa_mercadal: allData.placa_mercadal, placa_evarist_fabregas: allData.placa_evarist_fabregas, placa_del_teatre: allData.placa_del_teatre};
                 const top = allData.top || [];
